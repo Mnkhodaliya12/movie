@@ -2,13 +2,17 @@ import MovieCard from './MovieCard.jsx';
 
 function MovieList({ movies, favorites, onToggleFavorite }) {
   if (!movies || movies.length === 0) {
-    return <p className="empty-state">No movies to display.</p>;
+    return (
+      <p className="mt-6 text-sm text-slate-500 text-center">
+        No movies to display.
+      </p>
+    );
   }
 
   const favoriteIds = new Set(favorites.map((m) => m.id));
 
   return (
-    <div className="movie-grid">
+    <div className="grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
       {movies.map((movie) => (
         <MovieCard
           key={movie.id}

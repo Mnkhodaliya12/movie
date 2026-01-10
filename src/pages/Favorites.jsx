@@ -16,9 +16,9 @@ function Favorites() {
   };
 
   return (
-    <div className="page">
-      <div className="page-header">
-        <h2>Your Favorites</h2>
+    <div className="space-y-4">
+      <div className="flex items-baseline justify-between">
+        <h2 className="text-xl font-semibold text-slate-900">Your Favorites</h2>
       </div>
       <MovieList movies={favorites} favorites={favorites} onToggleFavorite={handleToggleFavorite} />
     </div>

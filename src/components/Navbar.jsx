@@ -12,18 +12,31 @@ function Navbar() {
   const showSearch = location.pathname === '/';
 
   return (
-    <header className="navbar">
-      <div className="navbar-left">
-        <Link to="/" className="logo">
+    <header className="sticky top-0 z-10 flex items-center justify-between gap-4 px-6 py-3 bg-white border-b border-slate-200/80 shadow-sm/5">
+      <div className="flex items-center">
+        <Link
+          to="/"
+          className="text-lg font-semibold tracking-wide text-slate-900 hover:text-indigo-600 transition-colors"
+        >
           Movies Hub
         </Link>
       </div>
-      <div className="navbar-center">{showSearch && <SearchBar onSearch={handleSearch} />}</div>
-      <nav className="navbar-right">
-        <Link to="/" className="nav-link">
+
+      <div className="flex-1 flex justify-center max-w-xl">
+        {showSearch && <SearchBar onSearch={handleSearch} />}
+      </div>
+
+      <nav className="flex items-center gap-3">
+        <Link
+          to="/"
+          className="text-sm px-3 py-1.5 rounded-full border border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-200 hover:bg-slate-50 transition-colors"
+        >
           Home
         </Link>
-        <Link to="/favorites" className="nav-link">
+        <Link
+          to="/favorites"
+          className="text-sm px-3 py-1.5 rounded-full border border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-200 hover:bg-slate-50 transition-colors"
+        >
           Favorites
         </Link>
       </nav>

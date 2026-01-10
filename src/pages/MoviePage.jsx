@@ -58,11 +58,11 @@ function MoviePage() {
   };
 
   return (
-    <div className="page">
-      <div className="action-buttons">
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2 mb-2">
         <button
           type="button"
-          className="back-button"
+          className="inline-flex items-center gap-1 rounded-full border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:border-indigo-500"
           onClick={() => {
             if (window.history.length > 2) {
               navigate(-1);
@@ -76,7 +76,7 @@ function MoviePage() {
         {movie?.poster_path && (
           <button
             type="button"
-            className="download-button"
+            className="inline-flex items-center gap-1 rounded-full border border-indigo-500 bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700"
             onClick={handleDownloadPoster}
             title="Download Poster"
           >
@@ -84,8 +84,8 @@ function MoviePage() {
           </button>
         )}
       </div>
-      {loading && <p>Loading...</p>}
-      {error && <p className="error-text">{error}</p>}
+      {loading && <p className="text-sm text-slate-500">Loading...</p>}
+      {error && <p className="text-sm text-red-600">{error}</p>}
       {!loading && !error && movie && (
         <MovieDetails movie={movie} isFavorite={isFavorite} onToggleFavorite={handleToggleFavorite} />
       )}
