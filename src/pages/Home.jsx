@@ -68,7 +68,7 @@ function Home() {
       );
 
   return (
-    <div className="space-y-8">
+    <div className="mt-8 md:mt-12 space-y-8">
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-700 px-6 py-8 shadow-lg md:px-10 md:py-10">
         <div className="relative z-10 grid gap-8 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] md:items-center">
           <div className="space-y-4">

@@ -12,7 +12,7 @@ function Navbar() {
   const showSearch = location.pathname === '/';
 
   return (
-    <header className="sticky top-0 z-10 flex items-center justify-between gap-4 px-6 py-3 bg-white border-b border-slate-200/80 shadow-sm/5">
+    <header className="sticky top-0 z-20 flex items-center justify-between gap-4 px-6 py-3 bg-white/80 backdrop-blur border-b border-slate-200/80 shadow-sm">
       <div className="flex items-center">
         <Link
           to="/"
@@ -38,6 +38,12 @@ function Navbar() {
           className="text-sm px-3 py-1.5 rounded-full border border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-200 hover:bg-slate-50 transition-colors"
         >
           Favorites
+        </Link>
+        <Link
+          to="/profile"
+          className="text-sm px-3 py-1.5 rounded-full border border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-200 hover:bg-slate-50 transition-colors"
+        >
+          Profile
         </Link>
       </nav>
     </header>
