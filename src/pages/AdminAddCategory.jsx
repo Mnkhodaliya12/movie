@@ -1,25 +1,35 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../components/AdminLayout.jsx';
+import { createCategory } from '../services/adminCategory';
 
 function AdminAddCategory() {
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [error, setError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const trimmed = name.trim();
     if (!trimmed) return;
-
-    // For now we just simulate a save and redirect back.
-    navigate('/admin/categories');
+    try {
+      setSubmitting(true);
+      setError(null);
+      await createCategory({ name: trimmed, description });
+      navigate('/admin/categories');
+    } catch (err) {
+      setError(err.message || 'Failed to save category');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <AdminLayout
       title="Add category"
-      subtitle="Create a new category that you can later assign to movies. This page is frontend-only for now."
+      subtitle="Create a new category that you can later assign to movies."
     >
       {/* Form */}
       <div className="px-4 py-4 md:px-6 md:py-5">
@@ -58,9 +68,10 @@ function AdminAddCategory() {
               <div className="flex gap-2">
                 <button
                   type="submit"
+                  disabled={submitting}
                   className="rounded-full bg-orange-500 px-4 py-2 font-medium text-white shadow-sm shadow-orange-500/40 hover:bg-orange-400"
                 >
-                  Save category
+                  {submitting ? 'Saving...' : 'Save category'}
                 </button>
                 <button
                   type="button"
@@ -70,9 +81,7 @@ function AdminAddCategory() {
                   Cancel
                 </button>
               </div>
-              <p className="text-slate-500">
-                This will not hit a real API yet. Wire it up to your backend later.
-              </p>
+              
             </div>
           </form>
         </section>

@@ -60,14 +60,14 @@ function AdminLayout({ title, subtitle, children }) {
             <span className="hidden sm:inline">/</span>
             <span className="hidden sm:inline text-slate-400">{title}</span>
           </div>
-          <div className="flex items-center gap-2 text-xs">
+          {/* <div className="flex items-center gap-2 text-xs">
             <button className="hidden sm:inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-slate-600 hover:bg-slate-100">
               Row per page: 10
             </button>
             <button className="inline-flex items-center rounded-full bg-orange-500 px-4 py-1.5 text-xs font-medium text-white shadow-sm shadow-orange-500/40 hover:bg-orange-400">
               Add New
             </button>
-          </div>
+          </div> */}
         </header>
 
         {/* Main content area */}

@@ -1,24 +1,61 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../components/AdminLayout.jsx';
+import { fetchCategories, deleteCategory } from '../services/adminCategory';
 
 function AdminCategories() {
-  const [categories, setCategories] = useState([
-    { id: 1, name: 'Action', movies: 214 },
-    { id: 2, name: 'Comedy', movies: 189 },
-    { id: 3, name: 'Sci-Fi', movies: 142 },
-    { id: 4, name: 'Drama', movies: 276 },
-  ]);
-  const [newCategory, setNewCategory] = useState('');
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
 
-  const handleRemove = (id) => {
-    setCategories((prev) => prev.filter((cat) => cat.id !== id));
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadCategories() {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetchCategories();
+        const data = response && response.data ? response.data : [];
+        if (isMounted) {
+          setCategories(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err.message || 'Failed to load categories');
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadCategories();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleRemove = async (id) => {
+    try {
+      await deleteCategory(id);
+      setCategories((prev) => prev.filter((cat) => cat.id !== id));
+      setSuccess('Category deleted successfully');
+      setError(null);
+    } catch (err) {
+      // When delete fails (e.g., category is in use), show a clear message
+      setError('Category can\'t be deleted');
+      setSuccess(null);
+    }
   };
 
   return (
     <AdminLayout
       title="Categories"
-      subtitle="Add, rename, or remove movie categories. This is frontend-only mock data for now."
+      subtitle="Add, rename, or remove categories."
     >
       {/* Add category entry point */}
       <div className="space-y-6 px-4 py-4 md:px-6 md:py-5">
@@ -43,6 +80,15 @@ function AdminCategories() {
         <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="mb-3 flex items-center justify-between text-xs text-slate-500">
             <span>{categories.length} categories</span>
+            <div className="flex items-center gap-3">
+              {loading && <span>Loading...</span>}
+              {success && !loading && (
+                <span className="text-emerald-600">{success}</span>
+              )}
+              {error && !loading && (
+                <span className="text-rose-500">{error}</span>
+              )}
+            </div>
           </div>
           <ul className="divide-y divide-slate-100 text-xs sm:text-sm">
             {categories.map((cat) => (
@@ -53,7 +99,9 @@ function AdminCategories() {
                   </span>
                   <div>
                     <p className="font-medium text-slate-900">{cat.name}</p>
-                    <p className="text-[0.7rem] text-slate-500">{cat.movies} movies</p>
+                    {cat.movies !== undefined && (
+                      <p className="text-[0.7rem] text-slate-500">{cat.movies} movies</p>
+                    )}
                   </div>
                 </div>
                 <button

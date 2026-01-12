@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../components/AdminLayout.jsx';
+import { createMovie } from '../services/adminMovies';
+import { fetchCategories } from '../services/adminCategory';
 
 function AdminAddMovie() {
   const navigate = useNavigate();
@@ -11,18 +13,61 @@ function AdminAddMovie() {
   const [rating, setRating] = useState('');
   const [popularity, setPopularity] = useState('');
   const [overview, setOverview] = useState('');
+  const [categories, setCategories] = useState([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadCategories() {
+      try {
+        const response = await fetchCategories();
+        const data = response && response.data ? response.data : [];
+        if (isMounted) {
+          setCategories(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        console.error('Failed to load categories', err);
+      }
+    }
+
+    loadCategories();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title.trim()) return;
-    // Simulate save then go back to movies list
-    navigate('/admin/movies');
+
+    const payload = {
+      title: title.trim(),
+      overview: overview.trim(),
+      // Map the numeric year to a LocalDate string that backend expects
+      releaseDate: year ? `${year}-01-01` : null,
+      rating: rating ? Number(rating) : null,
+      popularity: popularity ? Number(popularity) : null,
+      // Backend enum is DRAFT/PUBLISHED/FEATURED
+      status: status.toUpperCase(),
+      // Send selected categories as objects with id so backend can bind ManyToMany
+      categories: selectedCategoryIds.map((id) => ({ id })),
+    };
+
+    try {
+      await createMovie(payload);
+      navigate('/admin/movies');
+    } catch (err) {
+      // For now just log the error; you could add UI error state if needed
+      console.error('Failed to create movie', err);
+    }
   };
 
   return (
     <AdminLayout
       title="Add movie"
-      subtitle="Create a new movie entry. This page is frontend-only and does not yet save to a real backend."
+      subtitle="Create a new movie entry."
     >
       {/* Form */}
       <div className="px-4 py-4 md:px-6 md:py-5">
@@ -119,6 +164,38 @@ function AdminAddMovie() {
                 />
               </div>
 
+              <div className="space-y-1.5">
+                <span className="block text-xs font-medium text-slate-700">Categories</span>
+                <div className="flex flex-wrap gap-2 text-xs">
+                  {categories.map((cat) => {
+                    const checked = selectedCategoryIds.includes(cat.id);
+                    return (
+                      <label
+                        key={cat.id}
+                        className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1 text-slate-600 hover:bg-slate-50 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          className="h-3.5 w-3.5 rounded border-slate-300 text-indigo-500"
+                          checked={checked}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedCategoryIds((prev) => [...prev, cat.id]);
+                            } else {
+                              setSelectedCategoryIds((prev) => prev.filter((id) => id !== cat.id));
+                            }
+                          }}
+                        />
+                        <span>{cat.name}</span>
+                      </label>
+                    );
+                  })}
+                  {categories.length === 0 && (
+                    <span className="text-slate-400">No categories found. Create some in the Categories admin page.</span>
+                  )}
+                </div>
+              </div>
+
               <div className="flex flex-wrap items-center justify-between gap-3 pt-2 text-xs">
                 <div className="flex gap-2">
                   <button
@@ -135,9 +212,6 @@ function AdminAddMovie() {
                     Cancel
                   </button>
                 </div>
-                <p className="text-slate-500">
-                  This will not hit a real API yet. Wire it to your backend later.
-                </p>
               </div>
           </form>
         </section>
