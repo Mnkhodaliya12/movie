@@ -1,9 +1,21 @@
 const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
+const PLACEHOLDER_POSTER = 'https://via.placeholder.com/500x750?text=No+Poster';
 
 function MovieDetails({ movie, isFavorite, onToggleFavorite }) {
   if (!movie) return null;
 
-  const posterUrl = movie.poster_path ? IMAGE_BASE + movie.poster_path : null;
+  const posterPath = movie.posterPath || movie.poster_path;
+  const posterUrl = posterPath ? IMAGE_BASE + posterPath : PLACEHOLDER_POSTER;
+
+  const year =
+    (typeof movie.releaseDate === 'string' && movie.releaseDate.slice(0, 4)) ||
+    (typeof movie.release_date === 'string' && movie.release_date.slice(0, 4)) ||
+    'N/A';
+
+  const rating =
+    (typeof movie.rating === 'number' && movie.rating.toFixed(1)) ||
+    (typeof movie.vote_average === 'number' && movie.vote_average.toFixed(1)) ||
+    'N/A';
 
   return (
     <section className="flex flex-col gap-6 md:flex-row">
@@ -32,7 +44,7 @@ function MovieDetails({ movie, isFavorite, onToggleFavorite }) {
           </button>
         </div>
         <p className="text-sm text-slate-500">
-          {movie.release_date?.slice(0, 4) || 'N/A'} • Rating: {movie.vote_average?.toFixed(1) || 'N/A'}
+          {year} • Rating: {rating}
         </p>
         {movie.genres && (
           <p className="text-sm text-slate-500">

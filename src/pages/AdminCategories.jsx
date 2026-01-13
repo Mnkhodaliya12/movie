@@ -99,17 +99,28 @@ function AdminCategories() {
                   </span>
                   <div>
                     <p className="font-medium text-slate-900">{cat.name}</p>
+                    {cat.description && (
+                      <p className="text-[0.7rem] text-slate-500">{cat.description}</p>
+                    )}
                     {cat.movies !== undefined && (
                       <p className="text-[0.7rem] text-slate-500">{cat.movies} movies</p>
                     )}
                   </div>
                 </div>
-                <button
-                  onClick={() => handleRemove(cat.id)}
-                  className="rounded-full border border-rose-200 px-3 py-1 text-[0.7rem] text-rose-500 hover:bg-rose-50"
-                >
-                  Remove
-                </button>
+                <div className="flex items-center gap-2">
+                  <Link
+                    to={`/admin/categories/${cat.id}/edit`}
+                    className="rounded-full border border-slate-200 px-3 py-1 text-[0.7rem] text-slate-600 hover:bg-slate-50"
+                  >
+                    Edit
+                  </Link>
+                  <button
+                    onClick={() => handleRemove(cat.id)}
+                    className="rounded-full border border-rose-200 px-3 py-1 text-[0.7rem] text-rose-500 hover:bg-rose-50"
+                  >
+                    Remove
+                  </button>
+                </div>
               </li>
             ))}
             {categories.length === 0 && (
