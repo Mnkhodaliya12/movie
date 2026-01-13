@@ -79,7 +79,7 @@ function AdminEditMovie() {
       rating: rating ? Number(rating) : null,
       popularity: popularity ? Number(popularity) : null,
       status: status.toUpperCase(),
-      categories: selectedCategoryIds.map((catId) => ({ id: catId })),
+      categoryIds: selectedCategoryIds,
     };
 
     try {

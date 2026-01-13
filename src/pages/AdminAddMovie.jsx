@@ -51,8 +51,8 @@ function AdminAddMovie() {
       popularity: popularity ? Number(popularity) : null,
       // Backend enum is DRAFT/PUBLISHED/FEATURED
       status: status.toUpperCase(),
-      // Send selected categories as objects with id so backend can bind ManyToMany
-      categories: selectedCategoryIds.map((id) => ({ id })),
+      // Send selected category IDs as expected by the backend DTO
+      categoryIds: selectedCategoryIds,
     };
 
     try {
