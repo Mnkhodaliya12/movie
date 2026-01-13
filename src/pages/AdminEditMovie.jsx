@@ -1,63 +1,99 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AdminLayout from '../components/AdminLayout.jsx';
-
-// Mock movies source to populate initial values by id
-const mockMovies = [
-  {
-    id: '1',
-    title: 'Inception',
-    year: 2010,
-    status: 'published',
-    popularity: 98,
-    rating: 8.8,
-    overview: 'A thief who steals corporate secrets through dream-sharing technology.',
-  },
-  {
-    id: '2',
-    title: 'Interstellar',
-    year: 2014,
-    status: 'published',
-    popularity: 94,
-    rating: 8.6,
-    overview: 'A team of explorers travel through a wormhole in space.',
-  },
-];
+import { fetchCategories } from '../services/adminCategory';
+import { updateMovie, fetchMovieById } from '../services/adminMovies';
 
 function AdminEditMovie() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const existing = mockMovies.find((m) => m.id === id) || mockMovies[0];
-
-  const [title, setTitle] = useState(existing?.title || '');
-  const [year, setYear] = useState(existing?.year?.toString() || '');
-  const [status, setStatus] = useState(existing?.status || 'published');
-  const [rating, setRating] = useState(existing?.rating?.toString() || '');
-  const [popularity, setPopularity] = useState(existing?.popularity?.toString() || '');
-  const [overview, setOverview] = useState(existing?.overview || '');
+  const [title, setTitle] = useState('');
+  const [year, setYear] = useState('');
+  const [status, setStatus] = useState('published');
+  const [rating, setRating] = useState('');
+  const [popularity, setPopularity] = useState('');
+  const [overview, setOverview] = useState('');
+  const [categories, setCategories] = useState([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
 
   useEffect(() => {
-    if (!existing) return;
-    setTitle(existing.title || '');
-    setYear(existing.year ? String(existing.year) : '');
-    setStatus(existing.status || 'published');
-    setRating(existing.rating ? String(existing.rating) : '');
-    setPopularity(existing.popularity ? String(existing.popularity) : '');
-    setOverview(existing.overview || '');
-  }, [existing]);
+    let isMounted = true;
 
-  const handleSubmit = (e) => {
+    async function loadMovie() {
+      try {
+        const response = await fetchMovieById(id);
+        const movie = response && response.data ? response.data : null;
+        if (!isMounted || !movie) return;
+
+        setTitle(movie.title || '');
+        setOverview(movie.overview || '');
+        setYear(movie.releaseDate ? String(movie.releaseDate).split('-')[0] : '');
+        setStatus(movie.status ? String(movie.status).toLowerCase() : 'published');
+        setRating(movie.rating != null ? String(movie.rating) : '');
+        setPopularity(movie.popularity != null ? String(movie.popularity) : '');
+        const movieCategories = Array.isArray(movie.categories) ? movie.categories : [];
+        setSelectedCategoryIds(movieCategories.map((c) => c.id));
+      } catch (err) {
+        console.error('Failed to load movie', err);
+      }
+    }
+
+    loadMovie();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadCategories() {
+      try {
+        const response = await fetchCategories();
+        const data = response && response.data ? response.data : [];
+        if (isMounted) {
+          setCategories(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        console.error('Failed to load categories', err);
+      }
+    }
+
+    loadCategories();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title.trim()) return;
-    // Simulate save then go back to movies list
-    navigate('/admin/movies');
+
+    const payload = {
+      title: title.trim(),
+      overview: overview.trim(),
+      releaseDate: year ? `${year}-01-01` : null,
+      rating: rating ? Number(rating) : null,
+      popularity: popularity ? Number(popularity) : null,
+      status: status.toUpperCase(),
+      categoryIds: selectedCategoryIds,
+    };
+
+    try {
+      await updateMovie(id, payload);
+      navigate('/admin/movies');
+    } catch (err) {
+      console.error('Failed to update movie', err);
+    }
   };
 
   return (
     <AdminLayout
       title="Edit movie"
-      subtitle="Update the details for this movie. This page is frontend-only and does not yet save to a real backend."
+      subtitle="Update the details for this movie."
     >
       {/* Form */}
       <div className="px-4 py-4 md:px-6 md:py-5">
@@ -149,6 +185,38 @@ function AdminEditMovie() {
                 />
               </div>
 
+              <div className="space-y-1.5">
+                <span className="block text-xs font-medium text-slate-700">Categories</span>
+                <div className="flex flex-wrap gap-2 text-xs">
+                  {categories.map((cat) => {
+                    const checked = selectedCategoryIds.includes(cat.id);
+                    return (
+                      <label
+                        key={cat.id}
+                        className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1 text-slate-600 hover:bg-slate-50 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          className="h-3.5 w-3.5 rounded border-slate-300 text-indigo-500"
+                          checked={checked}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedCategoryIds((prev) => [...prev, cat.id]);
+                            } else {
+                              setSelectedCategoryIds((prev) => prev.filter((id) => id !== cat.id));
+                            }
+                          }}
+                        />
+                        <span>{cat.name}</span>
+                      </label>
+                    );
+                  })}
+                  {categories.length === 0 && (
+                    <span className="text-slate-400">No categories found. Create some in the Categories admin page.</span>
+                  )}
+                </div>
+              </div>
+
               <div className="flex flex-wrap items-center justify-between gap-3 pt-2 text-xs">
                 <div className="flex gap-2">
                   <button
@@ -165,9 +233,7 @@ function AdminEditMovie() {
                     Cancel
                   </button>
                 </div>
-                <p className="text-slate-500">
-                  This will not hit a real API yet. Wire it to your backend later.
-                </p>
+                
               </div>
           </form>
         </section>

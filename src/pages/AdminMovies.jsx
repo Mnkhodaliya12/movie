@@ -1,42 +1,56 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../components/AdminLayout.jsx';
+import { fetchMovies, deleteMovie } from '../services/adminMovies';
 
 function AdminMovies() {
-  const movies = [
-    {
-      id: 1,
-      title: 'Inception',
-      year: 2010,
-      status: 'Published',
-      popularity: 98,
-      rating: 8.8,
-    },
-    {
-      id: 2,
-      title: 'Interstellar',
-      year: 2014,
-      status: 'Published',
-      popularity: 94,
-      rating: 8.6,
-    },
-    {
-      id: 3,
-      title: 'The Dark Knight',
-      year: 2008,
-      status: 'Featured',
-      popularity: 99,
-      rating: 9.0,
-    },
-    {
-      id: 4,
-      title: 'Dune: Part Two',
-      year: 2024,
-      status: 'Draft',
-      popularity: 87,
-      rating: 8.4,
-    },
-  ];
+ 
+  const [ movies, setMovies ] = React.useState([]);
+  const [ loading, setLoading ] = React.useState(true);
+  const [ error, setError ] = React.useState(null);
+
+  useEffect(() => {
+   
+    let isMounted = true;
+    
+    async function loadMovies() {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetchMovies();
+        const data = response && response.data ? response.data : [];
+        if (isMounted) {
+          setMovies(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err.message || 'Failed to load movies');
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadMovies();
+
+    return () => {
+      isMounted = false;
+    };
+    
+  }, []);
+
+  
+  const handleRemove = async (id) => {
+    try {
+      await deleteMovie(id);
+      setMovies((prev) => prev.filter((movie) => movie.id !== id));
+    } catch (err) {
+      // keep UI simple: just store error
+      setError(err.message || 'Failed to delete movie');
+    }
+  };
 
   return (
     <AdminLayout
@@ -87,6 +101,7 @@ function AdminMovies() {
               <th className="px-4 py-2 text-left font-medium">Title</th>
               <th className="px-4 py-2 text-left font-medium">Year</th>
               <th className="px-4 py-2 text-left font-medium">Status</th>
+              <th className="px-4 py-2 text-left font-medium">Categories</th>
               <th className="px-4 py-2 text-left font-medium">Popularity</th>
               <th className="px-4 py-2 text-left font-medium">Rating</th>
               <th className="px-4 py-2 text-right font-medium">Actions</th>
@@ -99,11 +114,18 @@ function AdminMovies() {
                   <input type="checkbox" className="h-3.5 w-3.5 rounded border-slate-300 text-indigo-500" />
                 </td>
                 <td className="px-4 py-2 text-slate-900 font-medium">{movie.title}</td>
-                <td className="px-4 py-2 text-slate-600">{movie.year}</td>
+                <td className="px-4 py-2 text-slate-600">
+                  {movie.releaseDate ? new Date(movie.releaseDate).getFullYear() : '-'}
+                </td>
                 <td className="px-4 py-2">
                   <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-[0.7rem] font-medium text-emerald-700 ring-1 ring-emerald-100">
                     {movie.status}
                   </span>
+                </td>
+                <td className="px-4 py-2 text-slate-600">
+                  {Array.isArray(movie.categories) && movie.categories.length > 0
+                    ? movie.categories.map((c) => c.name).join(', ')
+                    : '-'}
                 </td>
                 <td className="px-4 py-2 text-slate-600">{movie.popularity}</td>
                 <td className="px-4 py-2 text-slate-600">{movie.rating}</td>
@@ -115,7 +137,10 @@ function AdminMovies() {
                     >
                       Edit
                     </Link>
-                    <button className="rounded-full border border-rose-200 px-3 py-1 text-[0.7rem] text-rose-500 hover:bg-rose-50">
+                    <button
+                      onClick={() => handleRemove(movie.id)}
+                      className="rounded-full border border-rose-200 px-3 py-1 text-[0.7rem] text-rose-500 hover:bg-rose-50"
+                    >
                       Remove
                     </button>
                   </div>
