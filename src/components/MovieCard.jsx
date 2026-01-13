@@ -18,13 +18,32 @@ function MovieCard({ movie, isFavorite, onToggleFavorite }) {
     'N/A';
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col shadow-sm hover:shadow-md transition-shadow">
+    <div className="relative bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col shadow-sm hover:shadow-md transition-shadow">
+      {/* Favorite toggle placed outside the Link to avoid navigation when toggling */}
+      {typeof onToggleFavorite === 'function' && (
+        <button
+          type="button"
+          aria-pressed={!!isFavorite}
+          aria-label={isFavorite ? `Remove ${movie.title} from favorites` : `Add ${movie.title} to favorites`}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            onToggleFavorite(movie);
+          }}
+          className="absolute top-3 right-3 z-10 inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/90 text-amber-500 border border-slate-200 shadow-sm hover:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+        >
+          <span className="text-lg">{isFavorite ? '★' : '☆'}</span>
+        </button>
+      )}
+
       <Link to={`/movie/${movie.id}`} className="block flex-1">
-        <div className="relative overflow-hidden">
+        <div className="relative overflow-hidden aspect-[2/3]">
           <img
             src={posterUrl}
             alt={movie.title}
-            className="w-full h-64 object-cover transition-transform duration-200 ease-out hover:scale-105"
+            loading="lazy"
+            className="w-full h-full object-cover transition-transform duration-200 ease-out hover:scale-105"
           />
         </div>
         <div className="p-3 space-y-1.5">
