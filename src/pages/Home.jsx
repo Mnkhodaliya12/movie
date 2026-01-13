@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import MovieList from '../components/MovieList.jsx';
 import Categories from '../components/Categories.jsx';
-import { getPopularMovies, searchMovies } from '../services/moviesApi.js';
+import { fetchMovies, searchMovies, fetchCategories } from '../services/moviesApi.js';
 import { loadFavorites, saveFavorites, toggleFavorite } from '../services/favorites.js';
 
 function Home() {
@@ -10,11 +10,13 @@ function Home() {
   const query = searchParams.get('q') || '';
 
   const [movies, setMovies] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [favorites, setFavorites] = useState(loadFavorites());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [title, setTitle] = useState('Popular Movies');
 
+  // Load movies (and handle search)
   useEffect(() => {
     let active = true;
 
@@ -27,12 +29,14 @@ function Home() {
           setTitle(`Search results for "${query}"`);
           const data = await searchMovies(query);
           if (!active) return;
-          setMovies(data.results || []);
+          const list = Array.isArray(data) ? data : data.results || data.content || [];
+          setMovies(list);
         } else {
           setTitle('Popular Movies');
-          const data = await getPopularMovies();
+          const data = await fetchMovies();
           if (!active) return;
-          setMovies(data.results || []);
+          const list = Array.isArray(data) ? data : data.results || data.content || [];
+          setMovies(list);
         }
       } catch (err) {
         if (!active) return;
@@ -49,23 +53,47 @@ function Home() {
     };
   }, [query]);
 
+  // Load categories from backend for homepage filters
+  useEffect(() => {
+    let active = true;
+
+    async function loadCategories() {
+      try {
+        const data = await fetchCategories();
+        if (!active) return;
+        const list = Array.isArray(data) ? data : data.results || data.content || [];
+        setCategories(list);
+      } catch (err) {
+        // For now just log; UI falls back to static categories component behavior
+        console.error('Failed to load categories', err);
+      }
+    }
+
+    loadCategories();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const handleToggleFavorite = (movie) => {
     const updated = toggleFavorite(favorites, movie);
     setFavorites(updated);
     saveFavorites(updated);
   };
 
-  // Filter movies by category if a category is selected
-  const selectedCategory = searchParams.get('category') || 'all';
-  
-  const filteredMovies = selectedCategory === 'all' 
-    ? movies 
-    : movies.filter(movie => 
-        movie.genres?.some(genre => 
-          genre.name.toLowerCase() === selectedCategory.toLowerCase() ||
-          genre.name.toLowerCase().includes(selectedCategory.toLowerCase())
-        )
-      );
+  // Filter movies by category if a category is selected (using category name)
+  const selectedCategory = (searchParams.get('category') || 'all').toLowerCase();
+
+  const filteredMovies = selectedCategory === 'all'
+    ? movies
+    : movies.filter((movie) => {
+        const movieCategories = movie.categories || movie.genres;
+        return movieCategories?.some((cat) => {
+          const name = String(cat.name || '').toLowerCase();
+          return name === selectedCategory;
+        });
+      });
 
   return (
     <div className="mt-8 md:mt-12 space-y-8">
@@ -140,7 +168,7 @@ function Home() {
           </div>
         </div>
 
-        <Categories />
+        <Categories categories={categories} />
 
         {loading && (
           <p className="mt-6 text-sm text-slate-500">Loading movies, please wait...</p>

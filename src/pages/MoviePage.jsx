@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import MovieDetails from '../components/MovieDetails.jsx';
-import { getMovieDetails } from '../services/moviesApi.js';
+import { fetchMovieById } from '../services/moviesApi.js';
 import { loadFavorites, saveFavorites, toggleFavorite } from '../services/favorites.js';
 
 function MoviePage() {
@@ -19,7 +19,7 @@ function MoviePage() {
       setLoading(true);
       setError('');
       try {
-        const data = await getMovieDetails(id);
+        const data = await fetchMovieById(id);
         if (!active) return;
         setMovie(data);
       } catch (err) {
