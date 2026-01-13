@@ -17,6 +17,7 @@ function SearchBar({ onSearch }) {
     >
       <input
         type="text"
+        aria-label="Search movies"
         placeholder="Search movies..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
@@ -24,6 +25,7 @@ function SearchBar({ onSearch }) {
       />
       <button
         type="submit"
+        aria-label="Search movies"
         className="px-4 py-2 rounded-full bg-indigo-600 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
       >
         Search

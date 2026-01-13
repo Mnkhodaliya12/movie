@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import MovieList from '../components/MovieList.jsx';
 import Categories from '../components/Categories.jsx';
+import SkeletonCard from '../components/SkeletonCard.jsx';
 import { fetchMovies, searchMovies, fetchCategories } from '../services/moviesApi.js';
 import { loadFavorites, saveFavorites, toggleFavorite } from '../services/favorites.js';
 
@@ -171,7 +172,11 @@ function Home() {
         <Categories categories={categories} />
 
         {loading && (
-          <p className="mt-6 text-sm text-slate-500">Loading movies, please wait...</p>
+          <div className="mt-6 grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
         )}
         {error && (
           <p className="mt-6 text-sm text-red-600">{error}</p>
