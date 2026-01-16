@@ -26,7 +26,12 @@ export async function fetchMovieById(id) {
   const res = await fetch(`${ADMIN_API_BASE_URL}/movies/${id}`, {
     method: 'GET',
   });
-  return handleResponse(res);
+  const body = await handleResponse(res);
+  // Unwrap ResponseModel { message, status, statusCode, data } so callers get the movie.
+  const movie = body && typeof body === 'object' && 'data' in body ? body.data : body;
+  console.log('adminMovies.fetchMovieById body:', body);
+  console.log('adminMovies.fetchMovieById movie:', movie);
+  return movie;
 }
 
 export async function createMovie(movieData, posterFile) {

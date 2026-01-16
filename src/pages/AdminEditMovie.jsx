@@ -31,9 +31,13 @@ function AdminEditMovie() {
     async function loadMovie() {
       try {
         setLoading(true);
-        const response = await fetchMovieById(id);
-        const movie = response && response.data ? response.data : null;
-        if (!isMounted || !movie) {
+        const movie = await fetchMovieById(id);
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (!movie) {
           setError('Movie not found');
           return;
         }
