@@ -26,43 +26,102 @@ function MovieDetails({ movie, isFavorite, onToggleFavorite }) {
     (typeof movie.vote_average === 'number' && movie.vote_average.toFixed(1)) ||
     'N/A';
 
+  const genres = movie.genres || movie.categories || [];
+
   return (
-    <section className="flex flex-col gap-6 md:flex-row">
-      {posterUrl && (
-        <img
-          src={posterUrl}
-          alt={movie.title}
-          className="w-full max-w-xs rounded-xl border border-slate-200 shadow-sm"
-        />
-      )}
-      <div className="flex-1 space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold text-slate-900">
-            {movie.title}
-          </h1>
-          <button
-            className={`inline-flex items-center gap-1 rounded-full border text-sm font-medium px-4 py-2 transition-colors ${
-              isFavorite
-                ? 'bg-amber-400/10 text-amber-600 border-amber-300'
-                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-            }`}
-            onClick={() => onToggleFavorite(movie)}
-          >
-            <span>{isFavorite ? '★' : '☆'}</span>
-            <span>{isFavorite ? 'Remove Favorite' : 'Add to Favorites'}</span>
-          </button>
+    <section className="space-y-6">
+      {/* Hero section with backdrop */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 p-6 md:p-8 text-white shadow-xl">
+        <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-start">
+          {posterUrl && (
+            <div className="flex-shrink-0">
+              <img
+                src={posterUrl}
+                alt={movie.title}
+                className="w-full max-w-[280px] rounded-xl border-2 border-white/20 shadow-2xl md:max-w-[320px]"
+              />
+            </div>
+          )}
+          <div className="flex-1 space-y-4">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="space-y-2">
+                <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
+                  {movie.title}
+                </h1>
+                <div className="flex flex-wrap items-center gap-3 text-sm text-slate-200">
+                  {year !== 'N/A' && (
+                    <span className="flex items-center gap-1">
+                      <span>📅</span>
+                      {year}
+                    </span>
+                  )}
+                  {rating !== 'N/A' && (
+                    <span className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 backdrop-blur-sm">
+                      <span className="text-amber-400">⭐</span>
+                      {rating}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <button
+                className={`inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-medium transition-all ${
+                  isFavorite
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-400/50 hover:bg-amber-500/30'
+                    : 'bg-white/10 text-white border-white/20 hover:bg-white/20 backdrop-blur-sm'
+                }`}
+                onClick={() => onToggleFavorite(movie)}
+              >
+                <span className="text-lg">{isFavorite ? '★' : '☆'}</span>
+                <span>{isFavorite ? 'Favorited' : 'Add to Favorites'}</span>
+              </button>
+            </div>
+
+            {genres.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {genres.map((genre, idx) => {
+                  const genreName = typeof genre === 'string' ? genre : genre.name;
+                  return (
+                    <span
+                      key={idx}
+                      className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white ring-1 ring-white/20 backdrop-blur-sm"
+                    >
+                      {genreName}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+
+            {movie.overview && (
+              <p className="max-w-2xl text-sm leading-relaxed text-slate-200 md:text-base">
+                {movie.overview}
+              </p>
+            )}
+          </div>
         </div>
-        <p className="text-sm text-slate-500">
-          {year} • Rating: {rating}
-        </p>
-        {movie.genres && (
-          <p className="text-sm text-slate-500">
-            Genres: {movie.genres.map((g) => g.name).join(', ')}
+        {/* Decorative gradient overlay */}
+        <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-purple-500/20 blur-3xl" />
+      </div>
+
+      {/* Additional details section */}
+      <div className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:grid-cols-2">
+        <div>
+          <h3 className="mb-2 text-sm font-semibold text-slate-900">Release Information</h3>
+          <p className="text-sm text-slate-600">
+            {year !== 'N/A' ? `Released in ${year}` : 'Release date not available'}
           </p>
+        </div>
+        {rating !== 'N/A' && (
+          <div>
+            <h3 className="mb-2 text-sm font-semibold text-slate-900">Rating</h3>
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">⭐</span>
+              <span className="text-lg font-semibold text-slate-900">{rating}</span>
+              <span className="text-sm text-slate-500">/ 10</span>
+            </div>
+          </div>
         )}
-        <p className="text-sm leading-relaxed text-slate-700">
-          {movie.overview}
-        </p>
       </div>
     </section>
   );

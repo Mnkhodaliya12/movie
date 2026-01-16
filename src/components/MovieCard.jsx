@@ -26,8 +26,11 @@ function MovieCard({ movie, isFavorite, onToggleFavorite }) {
     (typeof movie.vote_average === 'number' && movie.vote_average.toFixed(1)) ||
     'N/A';
 
+  const genres = movie.genres || movie.categories || [];
+  const displayGenres = Array.isArray(genres) ? genres.slice(0, 2) : [];
+
   return (
-    <div className="relative bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col shadow-sm hover:shadow-md transition-shadow">
+    <div className="group relative bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
       {/* Favorite toggle placed outside the Link to avoid navigation when toggling */}
       {typeof onToggleFavorite === 'function' && (
         <button
@@ -39,32 +42,71 @@ function MovieCard({ movie, isFavorite, onToggleFavorite }) {
             e.preventDefault();
             onToggleFavorite(movie);
           }}
-          className="absolute top-3 right-3 z-0 inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/90 text-amber-500 border border-slate-200 shadow-sm hover:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="absolute top-3 right-3 z-10 inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/95 backdrop-blur-sm text-amber-500 border border-slate-200 shadow-md hover:bg-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
           title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
         >
-          <span className="text-lg">{isFavorite ? '★' : '☆'}</span>
+          <span className={`text-lg transition-transform duration-200 ${isFavorite ? 'scale-110' : ''}`}>
+            {isFavorite ? '★' : '☆'}
+          </span>
         </button>
       )}
 
+      {/* Rating badge overlay */}
+      {rating !== 'N/A' && (
+        <div className="absolute top-3 left-3 z-10 flex items-center gap-1 rounded-full bg-black/70 backdrop-blur-sm px-2 py-1 text-xs font-semibold text-white shadow-lg">
+          <span className="text-amber-400">⭐</span>
+          <span>{rating}</span>
+        </div>
+      )}
+
       <Link to={`/movie/${movie.id}`} className="block flex-1">
-        <div className="relative overflow-hidden aspect-[2/3]">
+        <div className="relative overflow-hidden aspect-[2/3] bg-slate-100">
           <img
             src={posterUrl}
             alt={movie.title}
             loading="lazy"
-            className="w-full h-full object-cover transition-transform duration-200 ease-out hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-110"
           />
+          {/* Overlay on hover */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </div>
-        <div className="p-1 space-y-0.5">
-          <div className="flex items-start justify-between gap-1">
-            <h3 className="text-xs font-semibold text-slate-900 line-clamp-1">
+        <div className="p-3 space-y-2">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="text-sm font-semibold text-slate-900 line-clamp-2 group-hover:text-indigo-600 transition-colors">
               {movie.title}
             </h3>
           </div>
-          <p className="text-[0.7rem] text-slate-500">
-            {year} • Rating: {rating}
-          </p>
-          <p className="text-[0.7rem] text-slate-500 line-clamp-2">
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <span>{year}</span>
+            {rating !== 'N/A' && (
+              <>
+                <span>•</span>
+                <span className="flex items-center gap-1">
+                  <span className="text-amber-500">⭐</span>
+                  {rating}
+                </span>
+              </>
+            )}
+          </div>
+          
+          {/* Genre tags */}
+          {displayGenres.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {displayGenres.map((genre, idx) => {
+                const genreName = typeof genre === 'string' ? genre : genre.name;
+                return (
+                  <span
+                    key={idx}
+                    className="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-[0.65rem] font-medium text-indigo-700 ring-1 ring-indigo-100"
+                  >
+                    {genreName}
+                  </span>
+                );
+              })}
+            </div>
+          )}
+          
+          <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
             {movie.overview || 'No description available.'}
           </p>
         </div>

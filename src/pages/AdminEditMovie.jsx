@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AdminLayout from '../components/AdminLayout.jsx';
+import LoadingSpinner from '../components/LoadingSpinner.jsx';
+import { useToast } from '../components/ToastContainer.jsx';
 import { fetchCategories } from '../services/adminCategory';
 import { updateMovie, fetchMovieById } from '../services/adminMovies';
 
 function AdminEditMovie() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const [title, setTitle] = useState('');
   const [year, setYear] = useState('');
@@ -17,15 +20,23 @@ function AdminEditMovie() {
   const [categories, setCategories] = useState([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
   const [posterFile, setPosterFile] = useState(null);
+  const [posterPreview, setPosterPreview] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
 
     async function loadMovie() {
       try {
+        setLoading(true);
         const response = await fetchMovieById(id);
         const movie = response && response.data ? response.data : null;
-        if (!isMounted || !movie) return;
+        if (!isMounted || !movie) {
+          setError('Movie not found');
+          return;
+        }
 
         setTitle(movie.title || '');
         setOverview(movie.overview || '');
@@ -35,8 +46,24 @@ function AdminEditMovie() {
         setPopularity(movie.popularity != null ? String(movie.popularity) : '');
         const movieCategories = Array.isArray(movie.categories) ? movie.categories : [];
         setSelectedCategoryIds(movieCategories.map((c) => c.id));
+        
+        // Set poster preview if available
+        const posterPath = movie.posterPath || movie.poster_path;
+        if (posterPath) {
+          const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+          const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
+          if (typeof posterPath === 'string' && posterPath.startsWith('/uploads/')) {
+            setPosterPreview(`${API_BASE_URL}${posterPath}`);
+          } else {
+            setPosterPreview(TMDB_IMAGE_BASE + posterPath);
+          }
+        }
       } catch (err) {
-        console.error('Failed to load movie', err);
+        setError(err.message || 'Failed to load movie');
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     }
 
@@ -69,9 +96,30 @@ function AdminEditMovie() {
     };
   }, []);
 
+  const handlePosterChange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      setPosterFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPosterPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setPosterFile(null);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!title.trim()) {
+      setError('Title is required');
+      showToast('Please enter a movie title', 'error', 2000);
+      return;
+    }
+
+    setSubmitting(true);
+    setError(null);
 
     const payload = {
       title: title.trim(),
@@ -85,9 +133,14 @@ function AdminEditMovie() {
 
     try {
       await updateMovie(id, payload, posterFile);
+      showToast('Movie updated successfully!', 'success', 2000);
       navigate('/admin/movies');
     } catch (err) {
-      console.error('Failed to update movie', err);
+      const errorMsg = err.message || 'Failed to update movie';
+      setError(errorMsg);
+      showToast(errorMsg, 'error', 3000);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -98,8 +151,18 @@ function AdminEditMovie() {
     >
       {/* Form */}
       <div className="px-4 py-4 md:px-6 md:py-5">
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <form onSubmit={handleSubmit} className="space-y-4">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <LoadingSpinner size="lg" />
+            <p className="mt-4 text-sm text-slate-500">Loading movie...</p>
+          </div>
+        ) : error ? (
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        ) : (
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <label htmlFor="title" className="block text-xs font-medium text-slate-700">
@@ -136,10 +199,25 @@ function AdminEditMovie() {
                   id="poster"
                   type="file"
                   accept="image/*"
-                  onChange={(e) => setPosterFile(e.target.files && e.target.files[0] ? e.target.files[0] : null)}
+                  onChange={handlePosterChange}
                   className="block w-full text-xs text-slate-700 file:mr-3 file:rounded-full file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-slate-700 hover:file:bg-slate-200"
                 />
+                {posterPreview && (
+                  <div className="mt-2">
+                    <img
+                      src={posterPreview}
+                      alt="Poster preview"
+                      className="h-48 w-32 rounded-lg border border-slate-200 object-cover"
+                    />
+                  </div>
+                )}
               </div>
+
+              {error && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                  {error}
+                </div>
+              )}
 
               <div className="grid gap-4 sm:grid-cols-3">
                 <div className="space-y-1.5">
@@ -235,22 +313,25 @@ function AdminEditMovie() {
                 <div className="flex gap-2">
                   <button
                     type="submit"
-                    className="rounded-full bg-orange-500 px-4 py-2 font-medium text-white shadow-sm shadow-orange-500/40 hover:bg-orange-400"
+                    disabled={submitting || loading}
+                    className="inline-flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 font-medium text-white shadow-sm shadow-orange-500/40 hover:bg-orange-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    Save changes
+                    {submitting && <LoadingSpinner size="sm" className="text-white" />}
+                    <span>{submitting ? 'Saving...' : 'Save changes'}</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => navigate('/admin/movies')}
-                    className="rounded-full border border-slate-200 px-4 py-2 font-medium text-slate-600 hover:bg-slate-50"
+                    disabled={submitting}
+                    className="rounded-full border border-slate-200 px-4 py-2 font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Cancel
                   </button>
                 </div>
-                
               </div>
-          </form>
-        </section>
+            </form>
+          </section>
+        )}
       </div>
     </AdminLayout>
   );
