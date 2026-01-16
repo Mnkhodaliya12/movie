@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import MovieDetails from '../components/MovieDetails.jsx';
+import ErrorCard from '../components/ErrorCard.jsx';
+import LoadingSpinner from '../components/LoadingSpinner.jsx';
+import { useToast } from '../components/ToastContainer.jsx';
 import { fetchMovieById } from '../services/moviesApi.js';
 import { loadFavorites, saveFavorites, toggleFavorite } from '../services/favorites.js';
 
@@ -37,10 +40,19 @@ function MoviePage() {
     };
   }, [id]);
 
+  const { showToast } = useToast();
+
   const handleToggleFavorite = (movieToToggle) => {
+    const wasFavorite = favorites.some((m) => m.id === movieToToggle.id);
     const updated = toggleFavorite(favorites, movieToToggle);
     setFavorites(updated);
     saveFavorites(updated);
+    
+    if (wasFavorite) {
+      showToast(`${movieToToggle.title} removed from favorites`, 'info', 2000);
+    } else {
+      showToast(`${movieToToggle.title} added to favorites`, 'success', 2000);
+    }
   };
 
   const isFavorite = favorites.some((m) => m.id === movie?.id);
@@ -84,8 +96,30 @@ function MoviePage() {
           </button>
         )}
       </div>
-      {loading && <p className="text-sm text-slate-500">Loading...</p>}
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {loading && (
+        <div className="flex flex-col items-center justify-center py-12">
+          <LoadingSpinner size="lg" />
+          <p className="mt-4 text-sm text-slate-500">Loading movie details...</p>
+        </div>
+      )}
+      {error && !loading && (
+        <ErrorCard
+          message={error}
+          onRetry={() => {
+            setError('');
+            setLoading(true);
+            fetchMovieById(id)
+              .then((data) => {
+                setMovie(data);
+                setLoading(false);
+              })
+              .catch((err) => {
+                setError('Failed to load movie details.');
+                setLoading(false);
+              });
+          }}
+        />
+      )}
       {!loading && !error && movie && (
         <MovieDetails movie={movie} isFavorite={isFavorite} onToggleFavorite={handleToggleFavorite} />
       )}

@@ -29,13 +29,19 @@ export async function fetchMovieById(id) {
   return handleResponse(res);
 }
 
-export async function createMovie(movieData) {
+export async function createMovie(movieData, posterFile) {
+  const formData = new FormData();
+  formData.append(
+    'movie',
+    new Blob([JSON.stringify(movieData)], { type: 'application/json' }),
+  );
+  if (posterFile) {
+    formData.append('poster', posterFile);
+  }
+
   const res = await fetch(`${ADMIN_API_BASE_URL}/movies`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(movieData),
+    body: formData,
   });
   return handleResponse(res);
 }
@@ -47,13 +53,19 @@ export async function deleteMovie(id) {
   return handleResponse(res);
 }
 
-export async function updateMovie(id, movieData) {
+export async function updateMovie(id, movieData, posterFile) {
+  const formData = new FormData();
+  formData.append(
+    'movie',
+    new Blob([JSON.stringify(movieData)], { type: 'application/json' }),
+  );
+  if (posterFile) {
+    formData.append('poster', posterFile);
+  }
+
   const res = await fetch(`${ADMIN_API_BASE_URL}/movies/${id}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(movieData),
+    body: formData,
   });
   return handleResponse(res);
 }

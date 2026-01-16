@@ -3,11 +3,12 @@ import { Link, useLocation } from 'react-router-dom';
 
 function AdminLayout({ title, subtitle, children }) {
   const location = useLocation();
+  const [collapsed, setCollapsed] = React.useState(false);
 
   const navItems = [
-    { label: 'Dashboard', to: '/admin', match: '/admin' },
-    { label: 'Movies', to: '/admin/movies', match: '/admin/movies' },
-    { label: 'Categories', to: '/admin/categories', match: '/admin/categories' },
+    { label: 'Dashboard', to: '/admin', match: '/admin', icon: '🏠' },
+    { label: 'Movies', to: '/admin/movies', match: '/admin/movies', icon: '🎬' },
+    { label: 'Categories', to: '/admin/categories', match: '/admin/categories', icon: '🏷️' },
   ];
 
   const isActive = (match) => location.pathname.startsWith(match);
@@ -15,40 +16,107 @@ function AdminLayout({ title, subtitle, children }) {
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 flex">
       {/* Sidebar */}
-      <aside className="hidden md:flex md:w-64 flex-col bg-slate-900 text-slate-100">
-        <div className="px-6 py-5 border-b border-slate-800 flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500 text-sm font-bold">
-            MH
+      <aside
+        className={
+          'hidden md:flex flex-col bg-gradient-to-b from-slate-900 via-slate-950 to-slate-950 text-slate-100 shadow-xl transition-all duration-200 ' +
+          (collapsed ? 'md:w-20' : 'md:w-72')
+        }
+      >
+        <div
+          className={
+            'pt-6 pb-5 border-b border-white/5 flex items-center ' +
+            (collapsed ? 'justify-center px-3' : 'justify-between px-4')
+          }
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-orange-500 text-sm font-bold shadow-md shadow-orange-500/40">
+              MH
+            </div>
+            {!collapsed && (
+              <div>
+                <p className="text-sm font-semibold tracking-tight">Movies Hub</p>
+                <p className="text-[0.7rem] text-slate-300/80 tracking-wide">Admin Panel</p>
+              </div>
+            )}
           </div>
+          <button
+            type="button"
+            onClick={() => setCollapsed((prev) => !prev)}
+            className={
+              'flex items-center justify-center rounded-full border text-[0.7rem] transition-colors ' +
+              (collapsed
+                ? 'ml-2 h-6 w-6 border-slate-600/70 text-slate-300 bg-transparent hover:border-orange-400/80 hover:text-orange-300'
+                : 'h-8 w-8 bg-slate-900/60 border-white/10 text-slate-300 hover:bg-slate-900/80 hover:border-orange-400/70 hover:text-orange-300')
+            }
+          >
+            {collapsed ? '⟩' : '≡'}
+          </button>
+        </div>
+
+        <nav
+          className={
+            'flex-1 py-5 space-y-4 text-sm overflow-y-auto transition-[padding] duration-200 ' +
+            (collapsed ? 'px-2' : 'px-4')
+          }
+        >
           <div>
-            <p className="text-sm font-semibold tracking-tight">Movies Hub</p>
-            <p className="text-[0.7rem] text-slate-400">Admin</p>
+            {!collapsed && (
+              <p className="px-3 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-500/80">
+                Main
+              </p>
+            )}
+            <div className={collapsed ? 'mt-2 space-y-2' : 'mt-3 space-y-1.5'}>
+              {navItems.map((item) => {
+                const active = isActive(item.match);
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className={
+                      'group flex items-center justify-between rounded-xl px-3 py-2.5 text-[0.86rem] transition-colors ' +
+                      (active
+                        ? 'bg-white/10 text-white shadow-sm shadow-black/30 border border-white/15'
+                        : 'text-slate-200/80 hover:bg-white/5 hover:text-white')
+                    }
+                  >
+                    <span className={collapsed ? 'flex items-center justify-center' : 'flex items-center gap-3'}>
+                      <span
+                        className={
+                          'flex h-8 w-8 items-center justify-center rounded-xl border text-[0.9rem] ' +
+                          (active
+                            ? 'border-orange-400/80 bg-orange-500/20 text-orange-200'
+                            : 'border-slate-600/60 bg-slate-900/70 text-slate-200 group-hover:border-orange-400/80 group-hover:text-orange-200')
+                        }
+                      >
+                        {item.icon}
+                      </span>
+                      {!collapsed && <span>{item.label}</span>}
+                    </span>
+                    {!collapsed && (
+                      <span
+                        className={
+                          'text-xs font-semibold transition-colors ' +
+                          (active ? 'text-orange-400' : 'text-slate-500 group-hover:text-orange-400')
+                        }
+                      >
+                        ›
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
           </div>
-        </div>
-        <nav className="flex-1 px-3 py-4 space-y-1 text-sm">
-          {navItems.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={
-                'flex items-center gap-2 rounded-lg px-3 py-2 transition-colors ' +
-                (isActive(item.match)
-                  ? 'bg-slate-800 text-slate-50'
-                  : 'text-slate-300 hover:bg-slate-800/70 hover:text-slate-50')
-              }
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
-              {item.label}
-            </Link>
-          ))}
         </nav>
-        <div className="px-4 py-4 border-t border-slate-800 text-[0.7rem] text-slate-400">
-          <p className="font-medium text-slate-300">Environment</p>
-          <p className="mt-1 flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            Production
-          </p>
-        </div>
+        {!collapsed && (
+          <div className="px-6 py-4 border-t border-white/5 text-[0.7rem] text-slate-400/90 bg-slate-950/80">
+            <p className="font-medium text-slate-200/90">Environment</p>
+            <p className="mt-1 flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.9)]" />
+              Production
+            </p>
+          </div>
+        )}
       </aside>
 
       {/* Right column: top bar + content */}

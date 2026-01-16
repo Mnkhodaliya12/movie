@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../components/AdminLayout.jsx';
+import LoadingSpinner from '../components/LoadingSpinner.jsx';
+import { useToast } from '../components/ToastContainer.jsx';
 import { createMovie } from '../services/adminMovies';
 import { fetchCategories } from '../services/adminCategory';
 
 function AdminAddMovie() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const [title, setTitle] = useState('');
   const [year, setYear] = useState('');
@@ -15,6 +18,10 @@ function AdminAddMovie() {
   const [overview, setOverview] = useState('');
   const [categories, setCategories] = useState([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
+  const [posterFile, setPosterFile] = useState(null);
+  const [posterPreview, setPosterPreview] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -38,29 +45,52 @@ function AdminAddMovie() {
     };
   }, []);
 
+  const handlePosterChange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      setPosterFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPosterPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setPosterFile(null);
+      setPosterPreview(null);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!title.trim()) {
+      setError('Title is required');
+      showToast('Please enter a movie title', 'error', 2000);
+      return;
+    }
+
+    setSubmitting(true);
+    setError(null);
 
     const payload = {
       title: title.trim(),
       overview: overview.trim(),
-      // Map the numeric year to a LocalDate string that backend expects
       releaseDate: year ? `${year}-01-01` : null,
       rating: rating ? Number(rating) : null,
       popularity: popularity ? Number(popularity) : null,
-      // Backend enum is DRAFT/PUBLISHED/FEATURED
       status: status.toUpperCase(),
-      // Send selected category IDs as expected by the backend DTO
       categoryIds: selectedCategoryIds,
     };
 
     try {
-      await createMovie(payload);
+      await createMovie(payload, posterFile);
+      showToast('Movie created successfully!', 'success', 2000);
       navigate('/admin/movies');
     } catch (err) {
-      // For now just log the error; you could add UI error state if needed
-      console.error('Failed to create movie', err);
+      const errorMsg = err.message || 'Failed to create movie';
+      setError(errorMsg);
+      showToast(errorMsg, 'error', 3000);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -102,6 +132,34 @@ function AdminAddMovie() {
                   />
                 </div>
               </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="poster" className="block text-xs font-medium text-slate-700">
+                  Poster image
+                </label>
+                <input
+                  id="poster"
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePosterChange}
+                  className="block w-full text-xs text-slate-700 file:mr-3 file:rounded-full file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-slate-700 hover:file:bg-slate-200"
+                />
+                {posterPreview && (
+                  <div className="mt-2">
+                    <img
+                      src={posterPreview}
+                      alt="Poster preview"
+                      className="h-48 w-32 rounded-lg border border-slate-200 object-cover"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {error && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                  {error}
+                </div>
+              )}
 
               <div className="grid gap-4 sm:grid-cols-3">
                 <div className="space-y-1.5">
@@ -200,14 +258,17 @@ function AdminAddMovie() {
                 <div className="flex gap-2">
                   <button
                     type="submit"
-                    className="rounded-full bg-orange-500 px-4 py-2 font-medium text-white shadow-sm shadow-orange-500/40 hover:bg-orange-400"
+                    disabled={submitting}
+                    className="inline-flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 font-medium text-white shadow-sm shadow-orange-500/40 hover:bg-orange-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    Save movie
+                    {submitting && <LoadingSpinner size="sm" className="text-white" />}
+                    <span>{submitting ? 'Saving...' : 'Save movie'}</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => navigate('/admin/movies')}
-                    className="rounded-full border border-slate-200 px-4 py-2 font-medium text-slate-600 hover:bg-slate-50"
+                    disabled={submitting}
+                    className="rounded-full border border-slate-200 px-4 py-2 font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Cancel
                   </button>

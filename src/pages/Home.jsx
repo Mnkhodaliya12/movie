@@ -3,6 +3,10 @@ import { useSearchParams } from 'react-router-dom';
 import MovieList from '../components/MovieList.jsx';
 import Categories from '../components/Categories.jsx';
 import SkeletonCard from '../components/SkeletonCard.jsx';
+import ErrorCard from '../components/ErrorCard.jsx';
+import EmptyState from '../components/EmptyState.jsx';
+import LoadingSpinner from '../components/LoadingSpinner.jsx';
+import { useToast } from '../components/ToastContainer.jsx';
 import { fetchMovies, searchMovies, fetchCategories } from '../services/moviesApi.js';
 import { loadFavorites, saveFavorites, toggleFavorite } from '../services/favorites.js';
 
@@ -77,10 +81,20 @@ function Home() {
     };
   }, []);
 
+  const { showToast } = useToast();
+
   const handleToggleFavorite = (movie) => {
+    const wasFavorite = favorites.some((m) => m.id === movie.id);
     const updated = toggleFavorite(favorites, movie);
     setFavorites(updated);
     saveFavorites(updated);
+    
+    // Show toast notification
+    if (wasFavorite) {
+      showToast(`${movie.title} removed from favorites`, 'info', 2000);
+    } else {
+      showToast(`${movie.title} added to favorites`, 'success', 2000);
+    }
   };
 
   // Filter movies by category if a category is selected (using category name)
@@ -172,17 +186,48 @@ function Home() {
         <Categories categories={categories} />
 
         {loading && (
-          <div className="mt-6 grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <SkeletonCard key={i} />
-            ))}
+          <div className="mt-6">
+            <div className="mb-4 flex items-center justify-center gap-2 text-sm text-slate-600">
+              <LoadingSpinner size="sm" />
+              <span>Loading movies...</span>
+            </div>
+            <div className="grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <SkeletonCard key={i} />
+              ))}
+            </div>
           </div>
         )}
-        {error && (
-          <p className="mt-6 text-sm text-red-600">{error}</p>
+        
+        {error && !loading && (
+          <div className="mt-6">
+            <ErrorCard
+              message={error}
+              onRetry={async () => {
+                setError('');
+                setLoading(true);
+                try {
+                  const currentQuery = query;
+                  if (currentQuery) {
+                    const data = await searchMovies(currentQuery);
+                    const list = Array.isArray(data) ? data : data.results || data.content || [];
+                    setMovies(list);
+                  } else {
+                    const data = await fetchMovies();
+                    const list = Array.isArray(data) ? data : data.results || data.content || [];
+                    setMovies(list);
+                  }
+                } catch (err) {
+                  setError('Failed to load movies. Check your network or API key.');
+                } finally {
+                  setLoading(false);
+                }
+              }}
+            />
+          </div>
         )}
 
-        {!loading && !error && (
+        {!loading && !error && filteredMovies.length > 0 && (
           <MovieList
             movies={filteredMovies}
             favorites={favorites}
@@ -190,10 +235,22 @@ function Home() {
           />
         )}
 
-        {!loading && filteredMovies.length === 0 && (
-          <p className="mt-10 text-center text-sm text-slate-500">
-            No movies found in this category. Try another genre or a different search.
-          </p>
+        {!loading && !error && filteredMovies.length === 0 && (
+          <div className="mt-10">
+            <EmptyState
+              icon="🎬"
+              title={query ? `No movies found for "${query}"` : 'No movies found'}
+              message={
+                query
+                  ? 'Try adjusting your search terms or browse different categories.'
+                  : 'Try selecting a different category or check back later for new releases.'
+              }
+              action={() => {
+                window.location.href = '/';
+              }}
+              actionLabel="Browse All Movies"
+            />
+          </div>
         )}
       </section>
     </div>
