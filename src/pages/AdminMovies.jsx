@@ -3,6 +3,10 @@ import { Link } from 'react-router-dom';
 import AdminLayout from '../components/AdminLayout.jsx';
 import { fetchMovies, deleteMovie } from '../services/adminMovies';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w92';
+const PLACEHOLDER_POSTER = 'https://via.placeholder.com/60x90?text=No+Poster';
+
 function AdminMovies() {
  
   const [ movies, setMovies ] = React.useState([]);
@@ -98,6 +102,7 @@ function AdminMovies() {
               <th className="w-10 px-4 py-2 text-left">
                 <input type="checkbox" className="h-3.5 w-3.5 rounded border-slate-300 text-indigo-500" />
               </th>
+              <th className="px-4 py-2 text-left font-medium">Poster</th>
               <th className="px-4 py-2 text-left font-medium">Title</th>
               <th className="px-4 py-2 text-left font-medium">Year</th>
               <th className="px-4 py-2 text-left font-medium">Status</th>
@@ -108,10 +113,29 @@ function AdminMovies() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {movies.map((movie) => (
+            {movies.map((movie) => {
+              const posterPath = movie.posterPath || movie.poster_path;
+              let posterUrl = PLACEHOLDER_POSTER;
+
+              if (posterPath) {
+                if (typeof posterPath === 'string' && posterPath.startsWith('/uploads/')) {
+                  posterUrl = `${API_BASE_URL}${posterPath}`;
+                } else {
+                  posterUrl = TMDB_IMAGE_BASE + posterPath;
+                }
+              }
+
+              return (
               <tr key={movie.id} className="hover:bg-slate-50/70">
                 <td className="px-4 py-2">
                   <input type="checkbox" className="h-3.5 w-3.5 rounded border-slate-300 text-indigo-500" />
+                </td>
+                <td className="px-4 py-2">
+                  <img
+                    src={posterUrl}
+                    alt={movie.title}
+                    className="h-16 w-11 rounded border border-slate-200 object-cover bg-slate-100"
+                  />
                 </td>
                 <td className="px-4 py-2 text-slate-900 font-medium">{movie.title}</td>
                 <td className="px-4 py-2 text-slate-600">
@@ -146,7 +170,8 @@ function AdminMovies() {
                   </div>
                 </td>
               </tr>
-            ))}
+            );
+            })}
           </tbody>
         </table>
       </div>

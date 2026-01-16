@@ -16,6 +16,7 @@ function AdminEditMovie() {
   const [overview, setOverview] = useState('');
   const [categories, setCategories] = useState([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
+  const [posterFile, setPosterFile] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -83,7 +84,7 @@ function AdminEditMovie() {
     };
 
     try {
-      await updateMovie(id, payload);
+      await updateMovie(id, payload, posterFile);
       navigate('/admin/movies');
     } catch (err) {
       console.error('Failed to update movie', err);
@@ -125,6 +126,19 @@ function AdminEditMovie() {
                     className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/70 focus:border-indigo-500/70"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="poster" className="block text-xs font-medium text-slate-700">
+                  Poster image (leave empty to keep current)
+                </label>
+                <input
+                  id="poster"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setPosterFile(e.target.files && e.target.files[0] ? e.target.files[0] : null)}
+                  className="block w-full text-xs text-slate-700 file:mr-3 file:rounded-full file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-slate-700 hover:file:bg-slate-200"
+                />
               </div>
 
               <div className="grid gap-4 sm:grid-cols-3">

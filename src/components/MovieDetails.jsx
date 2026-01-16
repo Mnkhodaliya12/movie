@@ -1,11 +1,20 @@
-const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
 const PLACEHOLDER_POSTER = 'https://via.placeholder.com/500x750?text=No+Poster';
 
 function MovieDetails({ movie, isFavorite, onToggleFavorite }) {
   if (!movie) return null;
 
   const posterPath = movie.posterPath || movie.poster_path;
-  const posterUrl = posterPath ? IMAGE_BASE + posterPath : PLACEHOLDER_POSTER;
+  let posterUrl = PLACEHOLDER_POSTER;
+
+  if (posterPath) {
+    if (typeof posterPath === 'string' && posterPath.startsWith('/uploads/')) {
+      posterUrl = `${API_BASE_URL}${posterPath}`;
+    } else {
+      posterUrl = TMDB_IMAGE_BASE + posterPath;
+    }
+  }
 
   const year =
     (typeof movie.releaseDate === 'string' && movie.releaseDate.slice(0, 4)) ||

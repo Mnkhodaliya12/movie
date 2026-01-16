@@ -11,7 +11,7 @@ function Categories({ categories }) {
   const allCategories = [{ id: 'all', name: 'All' }, ...backendCategories];
 
   return (
-    <div className="sticky top-16 z-5 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
+    <div className="sticky top-16 z-20 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
       <div className="px-4">
         <nav>
           <ul className="flex flex-wrap gap-3 py-3">

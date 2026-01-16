@@ -1,11 +1,20 @@
 import { Link } from 'react-router-dom';
 
-const IMAGE_BASE = 'https://image.tmdb.org/t/p/w342';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w342';
 const PLACEHOLDER_POSTER = 'https://via.placeholder.com/342x513?text=No+Poster';
 
 function MovieCard({ movie, isFavorite, onToggleFavorite }) {
   const posterPath = movie.posterPath || movie.poster_path;
-  const posterUrl = posterPath ? IMAGE_BASE + posterPath : PLACEHOLDER_POSTER;
+  let posterUrl = PLACEHOLDER_POSTER;
+
+  if (posterPath) {
+    if (typeof posterPath === 'string' && posterPath.startsWith('/uploads/')) {
+      posterUrl = `${API_BASE_URL}${posterPath}`;
+    } else {
+      posterUrl = TMDB_IMAGE_BASE + posterPath;
+    }
+  }
 
   const year =
     (typeof movie.releaseDate === 'string' && movie.releaseDate.slice(0, 4)) ||
@@ -30,7 +39,7 @@ function MovieCard({ movie, isFavorite, onToggleFavorite }) {
             e.preventDefault();
             onToggleFavorite(movie);
           }}
-          className="absolute top-3 right-3 z-10 inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/90 text-amber-500 border border-slate-200 shadow-sm hover:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="absolute top-3 right-3 z-0 inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/90 text-amber-500 border border-slate-200 shadow-sm hover:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
           title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
         >
           <span className="text-lg">{isFavorite ? '★' : '☆'}</span>
@@ -46,16 +55,16 @@ function MovieCard({ movie, isFavorite, onToggleFavorite }) {
             className="w-full h-full object-cover transition-transform duration-200 ease-out hover:scale-105"
           />
         </div>
-        <div className="p-3 space-y-1.5">
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="text-sm font-semibold text-slate-900 line-clamp-2">
+        <div className="p-1 space-y-0.5">
+          <div className="flex items-start justify-between gap-1">
+            <h3 className="text-xs font-semibold text-slate-900 line-clamp-1">
               {movie.title}
             </h3>
           </div>
-          <p className="text-xs text-slate-500">
+          <p className="text-[0.7rem] text-slate-500">
             {year} • Rating: {rating}
           </p>
-          <p className="text-xs text-slate-500 line-clamp-3">
+          <p className="text-[0.7rem] text-slate-500 line-clamp-2">
             {movie.overview || 'No description available.'}
           </p>
         </div>
