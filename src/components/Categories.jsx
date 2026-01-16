@@ -35,7 +35,7 @@ function Categories({ categories }) {
   };
 
   return (
-    <div className="sticky top-16 z-20 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
+    <div className="bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
       <div className="px-4">
         <nav>
           <ul className="flex flex-wrap gap-2 py-3 overflow-x-auto scrollbar-hide">
