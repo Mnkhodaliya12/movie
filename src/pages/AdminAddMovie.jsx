@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../components/AdminLayout.jsx';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import { useToast } from '../components/ToastContainer.jsx';
-import { createMovie } from '../services/adminMovies';
+import { createMovie, uploadMovieScreenshots } from '../services/adminMovies';
 import { fetchCategories } from '../services/adminCategory';
 
 function AdminAddMovie() {
@@ -20,6 +20,7 @@ function AdminAddMovie() {
   const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
   const [posterFile, setPosterFile] = useState(null);
   const [posterPreview, setPosterPreview] = useState(null);
+  const [screenshotFiles, setScreenshotFiles] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
@@ -60,6 +61,11 @@ function AdminAddMovie() {
     }
   };
 
+  const handleScreenshotsChange = (e) => {
+    const files = e.target.files;
+    setScreenshotFiles(files ? Array.from(files) : []);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title.trim()) {
@@ -82,7 +88,18 @@ function AdminAddMovie() {
     };
 
     try {
-      await createMovie(payload, posterFile);
+      const response = await createMovie(payload, posterFile);
+
+      const createdMovie = response && typeof response === 'object' && 'data' in response
+        ? response.data
+        : response;
+
+      const movieId = createdMovie && createdMovie.id;
+
+      if (movieId && screenshotFiles && screenshotFiles.length > 0) {
+        await uploadMovieScreenshots(movieId, screenshotFiles);
+      }
+
       showToast('Movie created successfully!', 'success', 2000);
       navigate('/admin/movies');
     } catch (err) {
@@ -153,6 +170,20 @@ function AdminAddMovie() {
                     />
                   </div>
                 )}
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="screenshots" className="block text-xs font-medium text-slate-700">
+                  Screenshots (optional, you can select multiple)
+                </label>
+                <input
+                  id="screenshots"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleScreenshotsChange}
+                  className="block w-full text-xs text-slate-700 file:mr-3 file:rounded-full file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-slate-700 hover:file:bg-slate-200"
+                />
               </div>
 
               {error && (

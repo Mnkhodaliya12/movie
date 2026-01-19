@@ -28,6 +28,18 @@ function MovieDetails({ movie, isFavorite, onToggleFavorite }) {
 
   const genres = movie.genres || movie.categories || [];
 
+  const screenshots = Array.isArray(movie.screenshots) ? movie.screenshots : [];
+
+  const resolveImageUrl = (path) => {
+    if (!path) return null;
+
+    if (typeof path === 'string' && path.startsWith('/uploads/')) {
+      return `${API_BASE_URL}${path}`;
+    }
+
+    return path;
+  };
+
   return (
     <section className="space-y-6">
       {/* Hero section with backdrop */}
@@ -123,6 +135,35 @@ function MovieDetails({ movie, isFavorite, onToggleFavorite }) {
           </div>
         )}
       </div>
+
+      {screenshots.length > 0 && (
+        <div className="mt-6 mx-1 sm:mx-2 md:mx-4 rounded-2xl border border-slate-800/60 bg-slate-900 px-4 py-5 text-white shadow-lg">
+          <h2 className="mb-3 text-center text-xl font-extrabold tracking-wide text-red-500">
+            Screenshots
+          </h2>
+          <div className="mb-4 h-px w-full bg-slate-700/80" />
+
+          <div className="grid grid-cols-3 gap-4">
+            {screenshots.map((shot, index) => {
+              const src = resolveImageUrl(shot);
+              if (!src) return null;
+
+              return (
+                <div
+                  key={index}
+                  className="relative flex items-center justify-center overflow-hidden rounded-lg border border-slate-700/80 bg-slate-800/60 shadow-md h-40 md:h-52"
+                >
+                  <img
+                    src={src}
+                    alt={`${movie.title} screenshot ${index + 1}`}
+                    className="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.03]"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </section>
   );
 }

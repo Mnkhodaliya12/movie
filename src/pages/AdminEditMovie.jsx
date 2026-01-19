@@ -4,7 +4,7 @@ import AdminLayout from '../components/AdminLayout.jsx';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import { useToast } from '../components/ToastContainer.jsx';
 import { fetchCategories } from '../services/adminCategory';
-import { updateMovie, fetchMovieById } from '../services/adminMovies';
+import { updateMovie, fetchMovieById, uploadMovieScreenshots } from '../services/adminMovies';
 
 function AdminEditMovie() {
   const { id } = useParams();
@@ -21,6 +21,7 @@ function AdminEditMovie() {
   const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
   const [posterFile, setPosterFile] = useState(null);
   const [posterPreview, setPosterPreview] = useState(null);
+  const [screenshotFiles, setScreenshotFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -31,9 +32,13 @@ function AdminEditMovie() {
     async function loadMovie() {
       try {
         setLoading(true);
-        const response = await fetchMovieById(id);
-        const movie = response && response.data ? response.data : null;
-        if (!isMounted || !movie) {
+        const movie = await fetchMovieById(id);
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (!movie) {
           setError('Movie not found');
           return;
         }
@@ -110,6 +115,11 @@ function AdminEditMovie() {
     }
   };
 
+  const handleScreenshotsChange = (e) => {
+    const files = e.target.files;
+    setScreenshotFiles(files ? Array.from(files) : []);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title.trim()) {
@@ -133,6 +143,11 @@ function AdminEditMovie() {
 
     try {
       await updateMovie(id, payload, posterFile);
+
+      if (screenshotFiles && screenshotFiles.length > 0) {
+        await uploadMovieScreenshots(id, screenshotFiles);
+      }
+
       showToast('Movie updated successfully!', 'success', 2000);
       navigate('/admin/movies');
     } catch (err) {
@@ -211,6 +226,20 @@ function AdminEditMovie() {
                     />
                   </div>
                 )}
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="screenshots" className="block text-xs font-medium text-slate-700">
+                  Screenshots (optional, you can select multiple)
+                </label>
+                <input
+                  id="screenshots"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleScreenshotsChange}
+                  className="block w-full text-xs text-slate-700 file:mr-3 file:rounded-full file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-slate-700 hover:file:bg-slate-200"
+                />
               </div>
 
               {error && (
