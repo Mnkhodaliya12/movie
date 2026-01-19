@@ -8,6 +8,11 @@ import EmptyState from '../components/EmptyState.jsx';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import { useToast } from '../components/ToastContainer.jsx';
 import { fetchMovies, searchMovies, fetchCategories } from '../services/moviesApi.js';
+import { fetchDeals as fetchDealsApi } from '../services/dealsApi.js';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w185';
+const PLACEHOLDER_POSTER = 'https://via.placeholder.com/120x180?text=No+Poster';
 import { loadFavorites, saveFavorites, toggleFavorite } from '../services/favorites.js';
 
 function Home() {
@@ -20,6 +25,9 @@ function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [title, setTitle] = useState('Popular Movies');
+  const [deals, setDeals] = useState([]);
+  const [currentDealIndex, setCurrentDealIndex] = useState(0);
+  const [isDealsPaused, setIsDealsPaused] = useState(false);
 
   // Load movies (and handle search)
   useEffect(() => {
@@ -81,6 +89,48 @@ function Home() {
     };
   }, []);
 
+  // When the deals list changes, reset the slider index to keep it in range
+  useEffect(() => {
+    if (deals.length === 0) {
+      setCurrentDealIndex(0);
+    } else if (currentDealIndex >= deals.length) {
+      setCurrentDealIndex(0);
+    }
+  }, [deals.length]);
+
+  useEffect(() => {
+    if (deals.length <= 1 || isDealsPaused) return;
+
+    const intervalId = setInterval(() => {
+      setCurrentDealIndex((prev) => (prev + 1) % deals.length);
+    }, 3000);
+
+    return () => clearInterval(intervalId);
+  }, [deals.length, isDealsPaused]);
+
+  // Load active deals for hero card
+  useEffect(() => {
+    let active = true;
+
+    async function loadDeals() {
+      try {
+        const data = await fetchDealsApi();
+        if (!active) return;
+        const list = Array.isArray(data) ? data : data.results || data.content || [];
+        const activeDeals = list.filter((deal) => deal.active ?? deal.isActive);
+        setDeals(activeDeals);
+      } catch (err) {
+        console.error('Failed to load deals', err);
+      }
+    }
+
+    loadDeals();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const { showToast } = useToast();
 
   const handleToggleFavorite = (movie) => {
@@ -110,22 +160,78 @@ function Home() {
         });
       });
 
+  const hasDeals = deals.length > 0;
+  const featuredDeal = hasDeals
+    ? deals[Math.min(currentDealIndex, deals.length - 1)]
+    : null;
+
+  const handleNextDeal = () => {
+    if (!hasDeals) return;
+    setCurrentDealIndex((prev) => (prev + 1) % deals.length);
+  };
+
+  const handlePrevDeal = () => {
+    if (!hasDeals) return;
+    setCurrentDealIndex((prev) => (prev - 1 + deals.length) % deals.length);
+  };
+
+  const handleHeroMouseEnter = () => {
+    setIsDealsPaused(true);
+  };
+
+  const handleHeroMouseLeave = () => {
+    setIsDealsPaused(false);
+  };
+
   return (
-    <div className="mt-8 md:mt-12 space-y-8">
+    <div className="mt-2 md:mt-0 space-y-8">
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-700 px-6 py-8 shadow-lg md:px-10 md:py-10">
-        <div className="relative z-10 grid gap-8 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] md:items-center">
+        <div
+          className="relative z-10 grid gap-8 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] md:items-center"
+          onMouseEnter={handleHeroMouseEnter}
+          onMouseLeave={handleHeroMouseLeave}
+        >
+          {/* Left: featured deal text */}
           <div className="space-y-4">
-            <p className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-indigo-200 ring-1 ring-white/15">
-              Your personal movie universe
-            </p>
-            <h1 className="text-3xl font-semibold leading-tight tracking-tight text-slate-50 sm:text-4xl lg:text-5xl">
-              Discover, search & favorite
-              <span className="block text-indigo-200">the best movies online.</span>
-            </h1>
-            <p className="max-w-xl text-sm text-slate-200/80 sm:text-base">
-              Browse trending titles, search by name, and build your own collection of favorites.
-              All powered by live movie data.
-            </p>
+            {hasDeals && featuredDeal ? (
+              (() => {
+                const movie = featuredDeal.movie || {};
+                const description = movie.overview || 'Discover special picks and trending movies selected just for this deals section.';
+
+                return (
+                  <>
+                    <p className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-indigo-200 ring-1 ring-white/15">
+                      Featured deal
+                    </p>
+                    <h1 className="text-3xl font-semibold leading-tight tracking-tight text-slate-50 sm:text-4xl lg:text-5xl">
+                      {featuredDeal.title}
+                      {movie.title && (
+                        <span className="block text-indigo-200">
+                          {movie.title}
+                        </span>
+                      )}
+                    </h1>
+                    <p className="max-w-xl text-sm text-slate-200/80 sm:text-base">
+                      {description}
+                    </p>
+                  </>
+                );
+              })()
+            ) : (
+              <>
+                <p className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-indigo-200 ring-1 ring-white/15">
+                  Your personal movie universe
+                </p>
+                <h1 className="text-3xl font-semibold leading-tight tracking-tight text-slate-50 sm:text-4xl lg:text-5xl">
+                  Discover, search & favorite
+                  <span className="block text-indigo-200">the best movies online.</span>
+                </h1>
+                <p className="max-w-xl text-sm text-slate-200/80 sm:text-base">
+                  Browse trending titles, search by name, and build your own collection of favorites.
+                  All powered by live movie data.
+                </p>
+              </>
+            )}
             <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-slate-200/90 sm:text-sm">
               <div className="flex items-center gap-2 rounded-xl bg-black/20 px-3 py-2 ring-1 ring-white/10">
                 <span className="h-2 w-2 rounded-full bg-emerald-400" />
@@ -135,30 +241,36 @@ function Home() {
                 <span className="h-2 w-2 rounded-full bg-indigo-300" />
                 <span>Save what you love to Favorites</span>
               </div>
+              {hasDeals && null}
             </div>
           </div>
 
+          {/* Right: featured deal poster image */}
           <div className="hidden h-full md:block">
-            <div className="mx-auto flex h-full max-w-xs flex-col justify-between rounded-3xl bg-white/5 p-4 ring-1 ring-white/10 backdrop-blur">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-200/80">
-                  Now browsing
-                </p>
-                <p className="mt-1 text-sm text-slate-50/90">
-                  {title}
-                </p>
-              </div>
-              <div className="mt-6 space-y-2 text-xs text-slate-200/80">
-                <p className="flex items-center justify-between">
-                  <span>Results</span>
-                  <span className="rounded-full bg-black/30 px-2 py-0.5 text-[0.7rem] font-medium">
-                    {filteredMovies.length}
-                  </span>
-                </p>
-                <p className="text-[0.7rem] leading-relaxed text-slate-200/70">
-                  Refine with search on the top bar or explore curated categories below.
-                </p>
-              </div>
+            <div className="mx-auto flex h-full max-w-[300px] flex-col justify-center">
+              {hasDeals && featuredDeal && (() => {
+                const movie = featuredDeal.movie || {};
+                const posterPath = movie.posterPath || movie.poster_path;
+                let posterUrl = PLACEHOLDER_POSTER;
+
+                if (posterPath) {
+                  if (typeof posterPath === 'string' && posterPath.startsWith('/uploads/')) {
+                    posterUrl = `${API_BASE_URL}${posterPath}`;
+                  } else {
+                    posterUrl = TMDB_IMAGE_BASE + posterPath;
+                  }
+                }
+
+                return (
+                  <div className="relative w-full overflow-hidden rounded-2xl border border-white/20 bg-slate-900/60 shadow-lg aspect-square">
+                    <img
+                      src={posterUrl}
+                      alt={movie.title || featuredDeal.title}
+                      className="h-full w-full object-cover rounded-2xl"
+                    />
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>

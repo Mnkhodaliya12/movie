@@ -12,6 +12,7 @@ import AdminAddCategory from './pages/AdminAddCategory.jsx';
 import AdminEditCategory from './pages/AdminEditCategory.jsx';
 import AdminAddMovie from './pages/AdminAddMovie.jsx';
 import AdminEditMovie from './pages/AdminEditMovie.jsx';
+import AdminDeals from './pages/AdminDeals.jsx';
  
 
 function App() {
@@ -38,6 +39,7 @@ function App() {
             <Route path="/admin/movies" element={<AdminMovies />} />
             <Route path="/admin/movies/add" element={<AdminAddMovie />} />
             <Route path="/admin/movies/:id/edit" element={<AdminEditMovie />} />
+            <Route path="/admin/deals" element={<AdminDeals />} />
             <Route path="/admin/categories" element={<AdminCategories />} />
             <Route path="/admin/categories/add" element={<AdminAddCategory />} />
             <Route path="/admin/categories/:id/edit" element={<AdminEditCategory />} />
