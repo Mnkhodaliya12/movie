@@ -8,6 +8,7 @@ function AdminLayout({ title, subtitle, children }) {
   const navItems = [
     { label: 'Dashboard', to: '/admin', match: '/admin', icon: '🏠' },
     { label: 'Movies', to: '/admin/movies', match: '/admin/movies', icon: '🎬' },
+    { label: 'Deals', to: '/admin/deals', match: '/admin/deals', icon: '🔥' },
     { label: 'Categories', to: '/admin/categories', match: '/admin/categories', icon: '🏷️' },
   ];
 
