@@ -22,6 +22,8 @@ function AdminEditMovie() {
   const [posterFile, setPosterFile] = useState(null);
   const [posterPreview, setPosterPreview] = useState(null);
   const [screenshotFiles, setScreenshotFiles] = useState([]);
+  const [screenshotPreviews, setScreenshotPreviews] = useState([]);
+  const [existingScreenshots, setExistingScreenshots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -51,17 +53,36 @@ function AdminEditMovie() {
         setPopularity(movie.popularity != null ? String(movie.popularity) : '');
         const movieCategories = Array.isArray(movie.categories) ? movie.categories : [];
         setSelectedCategoryIds(movieCategories.map((c) => c.id));
-        
+
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+        const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
+
         // Set poster preview if available
         const posterPath = movie.posterPath || movie.poster_path;
         if (posterPath) {
-          const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
-          const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
           if (typeof posterPath === 'string' && posterPath.startsWith('/uploads/')) {
             setPosterPreview(`${API_BASE_URL}${posterPath}`);
           } else {
             setPosterPreview(TMDB_IMAGE_BASE + posterPath);
           }
+        }
+
+        // Set existing screenshots preview if available
+        if (movie.screenshots) {
+          const screenshotsArray = Array.isArray(movie.screenshots)
+            ? movie.screenshots
+            : Array.from(movie.screenshots);
+
+          const normalized = screenshotsArray.map((path) => {
+            if (typeof path === 'string' && path.startsWith('/uploads/')) {
+              return `${API_BASE_URL}${path}`;
+            }
+            return path;
+          });
+
+          setExistingScreenshots(normalized);
+        } else {
+          setExistingScreenshots([]);
         }
       } catch (err) {
         setError(err.message || 'Failed to load movie');
@@ -101,6 +122,13 @@ function AdminEditMovie() {
     };
   }, []);
 
+  // Clean up screenshot preview object URLs on unmount
+  useEffect(() => {
+    return () => {
+      screenshotPreviews.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [screenshotPreviews]);
+
   const handlePosterChange = (e) => {
     const file = e.target.files && e.target.files[0];
     if (file) {
@@ -117,7 +145,15 @@ function AdminEditMovie() {
 
   const handleScreenshotsChange = (e) => {
     const files = e.target.files;
-    setScreenshotFiles(files ? Array.from(files) : []);
+    const nextFiles = files ? Array.from(files) : [];
+
+    // Revoke any existing preview URLs before creating new ones
+    screenshotPreviews.forEach((url) => URL.revokeObjectURL(url));
+
+    const nextPreviews = nextFiles.map((file) => URL.createObjectURL(file));
+
+    setScreenshotFiles(nextFiles);
+    setScreenshotPreviews(nextPreviews);
   };
 
   const handleSubmit = async (e) => {
@@ -240,6 +276,41 @@ function AdminEditMovie() {
                   onChange={handleScreenshotsChange}
                   className="block w-full text-xs text-slate-700 file:mr-3 file:rounded-full file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-slate-700 hover:file:bg-slate-200"
                 />
+                {existingScreenshots && existingScreenshots.length > 0 && (
+                  <div className="mt-3">
+                    <p className="mb-1 text-[0.7rem] text-slate-500">Existing screenshots</p>
+                    <div className="flex flex-wrap gap-2">
+                      {existingScreenshots.map((src, index) => (
+                        <div
+                          key={src}
+                          className="h-20 w-20 overflow-hidden rounded-lg border border-slate-200 bg-slate-50"
+                        >
+                          <img
+                            src={src}
+                            alt={`Existing screenshot ${index + 1}`}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {screenshotPreviews && screenshotPreviews.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {screenshotPreviews.map((src, index) => (
+                      <div
+                        key={src}
+                        className="h-20 w-20 overflow-hidden rounded-lg border border-slate-200 bg-slate-50"
+                      >
+                        <img
+                          src={src}
+                          alt={`Screenshot preview ${index + 1}`}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {error && (
