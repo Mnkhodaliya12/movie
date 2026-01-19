@@ -74,3 +74,20 @@ export async function updateMovie(id, movieData, posterFile) {
   });
   return handleResponse(res);
 }
+
+export async function uploadMovieScreenshots(id, files) {
+  const formData = new FormData();
+
+  if (files && files.length > 0) {
+    Array.from(files).forEach((file) => {
+      formData.append('screenshots', file);
+    });
+  }
+
+  const res = await fetch(`${ADMIN_API_BASE_URL}/movies/${id}/screenshots`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  return handleResponse(res);
+}
