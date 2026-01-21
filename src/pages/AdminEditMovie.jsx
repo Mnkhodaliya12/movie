@@ -141,6 +141,7 @@ function AdminEditMovie() {
         setPosterPreview(null);
         return;
       }
+      setError(null);
       setPosterFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -157,6 +158,16 @@ function AdminEditMovie() {
     const nextFiles = files ? Array.from(files) : [];
 
     if (nextFiles.length > 0) {
+      const maxCount = 6;
+      if (nextFiles.length > maxCount) {
+        setError('You can upload a maximum of 6 screenshots.');
+        showToast('You can upload a maximum of 6 screenshots.', 'error', 3000);
+        e.target.value = '';
+        setScreenshotFiles([]);
+        setScreenshotPreviews([]);
+        return;
+      }
+
       const maxPerFile = 2 * 1024 * 1024; // 2MB
       const maxTotal = 10 * 1024 * 1024; // 10MB
 
@@ -184,6 +195,10 @@ function AdminEditMovie() {
 
     // Revoke any existing preview URLs before creating new ones
     screenshotPreviews.forEach((url) => URL.revokeObjectURL(url));
+
+    if (nextFiles.length > 0) {
+      setError(null);
+    }
 
     const nextPreviews = nextFiles.map((file) => URL.createObjectURL(file));
 

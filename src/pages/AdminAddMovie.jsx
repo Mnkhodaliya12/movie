@@ -58,6 +58,7 @@ function AdminAddMovie() {
         setPosterPreview(null);
         return;
       }
+      setError(null);
       setPosterFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -75,6 +76,15 @@ function AdminAddMovie() {
     const selected = files ? Array.from(files) : [];
 
     if (selected.length > 0) {
+      const maxCount = 6;
+      if (selected.length > maxCount) {
+        setError('You can upload a maximum of 6 screenshots.');
+        showToast('You can upload a maximum of 6 screenshots.', 'error', 3000);
+        e.target.value = '';
+        setScreenshotFiles([]);
+        return;
+      }
+
       const maxPerFile = 2 * 1024 * 1024; // 2MB
       const maxTotal = 10 * 1024 * 1024; // 10MB
 
@@ -97,7 +107,9 @@ function AdminAddMovie() {
         }
       }
     }
-
+    if (selected.length > 0) {
+      setError(null);
+    }
     setScreenshotFiles(selected);
   };
 
@@ -211,6 +223,7 @@ function AdminAddMovie() {
                 <label htmlFor="screenshots" className="block text-xs font-medium text-slate-700">
                   Screenshots (optional, you can select multiple)
                 </label>
+                <p className="text-[0.7rem] text-slate-500">You can upload up to 6 screenshots (max 2MB each, 10MB total).</p>
                 <input
                   id="screenshots"
                   type="file"
