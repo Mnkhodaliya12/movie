@@ -132,6 +132,15 @@ function AdminEditMovie() {
   const handlePosterChange = (e) => {
     const file = e.target.files && e.target.files[0];
     if (file) {
+      const maxBytes = 2 * 1024 * 1024; // 2MB
+      if (file.size > maxBytes) {
+        setError('Poster image is too large. Maximum allowed size is 2MB.');
+        showToast('Poster image is too large. Maximum allowed size is 2MB.', 'error', 3000);
+        e.target.value = '';
+        setPosterFile(null);
+        setPosterPreview(null);
+        return;
+      }
       setPosterFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -146,6 +155,32 @@ function AdminEditMovie() {
   const handleScreenshotsChange = (e) => {
     const files = e.target.files;
     const nextFiles = files ? Array.from(files) : [];
+
+    if (nextFiles.length > 0) {
+      const maxPerFile = 2 * 1024 * 1024; // 2MB
+      const maxTotal = 10 * 1024 * 1024; // 10MB
+
+      let totalSize = 0;
+      for (const file of nextFiles) {
+        if (file.size > maxPerFile) {
+          setError('Each screenshot must be 2MB or smaller.');
+          showToast('Each screenshot must be 2MB or smaller.', 'error', 3000);
+          e.target.value = '';
+          setScreenshotFiles([]);
+          setScreenshotPreviews([]);
+          return;
+        }
+        totalSize += file.size;
+        if (totalSize > maxTotal) {
+          setError('Total screenshots size is too large. Maximum combined size is 10MB.');
+          showToast('Total screenshots size is too large. Maximum combined size is 10MB.', 'error', 3000);
+          e.target.value = '';
+          setScreenshotFiles([]);
+          setScreenshotPreviews([]);
+          return;
+        }
+      }
+    }
 
     // Revoke any existing preview URLs before creating new ones
     screenshotPreviews.forEach((url) => URL.revokeObjectURL(url));
