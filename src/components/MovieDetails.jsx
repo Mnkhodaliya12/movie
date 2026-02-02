@@ -1,9 +1,13 @@
+import { useState } from 'react';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
 const PLACEHOLDER_POSTER = 'https://via.placeholder.com/500x750?text=No+Poster';
 
 function MovieDetails({ movie, isFavorite, onToggleFavorite }) {
   if (!movie) return null;
+
+  const [activeScreenshot, setActiveScreenshot] = useState(null);
 
   const posterPath = movie.posterPath || movie.poster_path;
   let posterUrl = PLACEHOLDER_POSTER;
@@ -151,7 +155,8 @@ function MovieDetails({ movie, isFavorite, onToggleFavorite }) {
               return (
                 <div
                   key={index}
-                  className="relative flex items-center justify-center overflow-hidden rounded-lg border border-slate-700/80 bg-slate-800/60 shadow-md h-40 md:h-52"
+                  className="relative flex items-center justify-center overflow-hidden rounded-lg border border-slate-700/80 bg-slate-800/60 shadow-md h-40 md:h-52 cursor-pointer"
+                  onClick={() => setActiveScreenshot(src)}
                 >
                   <img
                     src={src}
@@ -161,6 +166,23 @@ function MovieDetails({ movie, isFavorite, onToggleFavorite }) {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+      {activeScreenshot && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4"
+          onClick={() => setActiveScreenshot(null)}
+        >
+          <div
+            className="max-h-[90vh] max-w-4xl overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={activeScreenshot}
+              alt="Screenshot preview"
+              className="h-full w-full max-h-[90vh] object-contain"
+            />
           </div>
         </div>
       )}
