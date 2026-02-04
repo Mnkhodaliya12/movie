@@ -31,25 +31,6 @@ function MovieCard({ movie, isFavorite, onToggleFavorite }) {
 
   return (
     <div className="group relative bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-      {/* Favorite toggle placed outside the Link to avoid navigation when toggling */}
-      {typeof onToggleFavorite === 'function' && (
-        <button
-          type="button"
-          aria-pressed={!!isFavorite}
-          aria-label={isFavorite ? `Remove ${movie.title} from favorites` : `Add ${movie.title} to favorites`}
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            onToggleFavorite(movie);
-          }}
-          className="absolute top-3 right-3 z-10 inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/95 backdrop-blur-sm text-amber-500 border border-slate-200 shadow-md hover:bg-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
-          title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-        >
-          <span className={`text-lg transition-transform duration-200 ${isFavorite ? 'scale-110' : ''}`}>
-            {isFavorite ? '★' : '☆'}
-          </span>
-        </button>
-      )}
 
       {/* Rating badge overlay */}
       {rating !== 'N/A' && (

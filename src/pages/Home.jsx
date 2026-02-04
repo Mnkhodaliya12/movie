@@ -58,6 +58,10 @@ function Home() {
 
   const [isDealsPaused, setIsDealsPaused] = useState(false);
 
+  const [page, setPage] = useState(0);
+  const [pageSize] = useState(20);
+  const [pageInfo, setPageInfo] = useState(null);
+
 
 
   // Load movies (and handle search)
@@ -94,13 +98,16 @@ function Home() {
 
           setTitle('Popular Movies');
 
-          const data = await fetchMovies();
+          const response = await fetchMovies(page, pageSize);
 
           if (!active) return;
 
-          const list = Array.isArray(data) ? data : data.results || data.content || [];
+          const { data, pageResult } = response || {};
+
+          const list = Array.isArray(data) ? data : data?.results || data?.content || [];
 
           setMovies(list);
+          setPageInfo(pageResult || null);
 
         }
 
@@ -130,7 +137,7 @@ function Home() {
 
     };
 
-  }, [query]);
+  }, [query, page, pageSize]);
 
 
 
@@ -624,12 +631,6 @@ function Home() {
 
             <h2 className="text-xl font-semibold text-slate-900 sm:text-2xl">{title}</h2>
 
-            <p className="mt-1 text-xs text-slate-500 sm:text-sm">
-
-              Filter by genre or mood to quickly jump into the kind of story you&apos;re in the mood for.
-
-            </p>
-
           </div>
 
           <div className="flex items-center gap-2 text-xs text-slate-500 sm:text-sm">
@@ -641,6 +642,14 @@ function Home() {
               Showing {filteredMovies.length} titles
 
             </span>
+
+            {pageInfo && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-[0.7rem] font-medium text-slate-700 ring-1 ring-slate-200">
+                <span>
+                  Page {pageInfo.currentPageNumber} of {pageInfo.totalPages}
+                </span>
+              </span>
+            )}
 
           </div>
 
@@ -708,11 +717,14 @@ function Home() {
 
                   } else {
 
-                    const data = await fetchMovies();
+                    const response = await fetchMovies(page, pageSize);
 
-                    const list = Array.isArray(data) ? data : data.results || data.content || [];
+                    const { data, pageResult } = response || {};
+
+                    const list = Array.isArray(data) ? data : data?.results || data?.content || [];
 
                     setMovies(list);
+                    setPageInfo(pageResult || null);
 
                   }
 
@@ -748,6 +760,30 @@ function Home() {
 
           />
 
+        )}
+
+        {!loading && !error && pageInfo && pageInfo.totalPages > 1 && (
+          <div className="mt-6 flex items-center justify-center gap-4 text-sm text-slate-700">
+            <button
+              type="button"
+              className="rounded-full bg-slate-100 px-4 py-2 text-xs font-medium ring-1 ring-slate-300 disabled:opacity-50"
+              onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
+              disabled={page <= 0}
+            >
+              Previous
+            </button>
+            <span>
+              Page {pageInfo.currentPageNumber} of {pageInfo.totalPages}
+            </span>
+            <button
+              type="button"
+              className="rounded-full bg-slate-100 px-4 py-2 text-xs font-medium ring-1 ring-slate-300 disabled:opacity-50"
+              onClick={() => setPage((prev) => (pageInfo && pageInfo.totalPages ? Math.min(prev + 1, pageInfo.totalPages - 1) : prev + 1))}
+              disabled={pageInfo && pageInfo.totalPages ? page >= pageInfo.totalPages - 1 : false}
+            >
+              Next
+            </button>
+          </div>
         )}
 
 

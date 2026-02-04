@@ -15,8 +15,12 @@ async function handleResponse(response) {
 }
 
 
-export async function fetchMovies() {
-  const res = await fetch(`${ADMIN_API_BASE_URL}/movies`, {
+export async function fetchMovies(page = 0, size = 20) {
+  const params = new URLSearchParams();
+  params.set('pageNumber', String(page + 1));
+  params.set('pageSize', String(size));
+
+  const res = await fetch(`${ADMIN_API_BASE_URL}/movies?${params.toString()}`, {
     method: 'GET',
   });
   return handleResponse(res);

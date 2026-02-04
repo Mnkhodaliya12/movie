@@ -47,7 +47,7 @@ function Navbar() {
         </div>
 
         <nav className="hidden md:flex items-center gap-2">
-          <Link
+          {/* <Link
             to="/"
             className={`text-sm px-4 py-2 rounded-full transition-all ${
               location.pathname === '/'
@@ -76,7 +76,7 @@ function Navbar() {
             }`}
           >
             Profile
-          </Link>
+          </Link> */}
         </nav>
       </div>
 

@@ -21,6 +21,10 @@ function AdminMovies() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const { showToast } = useToast();
 
+  const [page, setPage] = useState(0);
+  const [pageSize] = useState(15);
+  const [pageInfo, setPageInfo] = useState(null);
+
   useEffect(() => {
    
     let isMounted = true;
@@ -29,12 +33,13 @@ function AdminMovies() {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetchMovies();
-        const data = response && response.data ? response.data : [];
+        const response = await fetchMovies(page, pageSize);
+        const { data, pageResult } = response || {};
         if (isMounted) {
           const moviesList = Array.isArray(data) ? data : [];
           setMovies(moviesList);
           setFilteredMovies(moviesList);
+          setPageInfo(pageResult || null);
         }
       } catch (err) {
         if (isMounted) {
@@ -53,7 +58,7 @@ function AdminMovies() {
       isMounted = false;
     };
     
-  }, []);
+  }, [page, pageSize]);
 
   // Search functionality
   useEffect(() => {
@@ -100,8 +105,13 @@ function AdminMovies() {
       <div className="flex flex-col gap-3 border-b border-slate-200 px-4 py-3 md:flex-row md:items-center md:justify-between md:px-6">
         <div className="flex items-center gap-2 text-xs text-slate-500">
           <span className="hidden sm:inline">
-            Showing {filteredMovies.length} of {movies.length} movies
+            Showing {filteredMovies.length} movies
           </span>
+          {pageInfo && (
+            <span className="hidden sm:inline ml-2">
+              Page {pageInfo.currentPageNumber} of {pageInfo.totalPages}
+            </span>
+          )}
           {loading && (
             <span className="flex items-center gap-2">
               <LoadingSpinner size="sm" />
@@ -158,11 +168,12 @@ function AdminMovies() {
               setError(null);
               setLoading(true);
               try {
-                const response = await fetchMovies();
-                const data = response && response.data ? response.data : [];
+                const response = await fetchMovies(page, pageSize);
+                const { data, pageResult } = response || {};
                 const moviesList = Array.isArray(data) ? data : [];
                 setMovies(moviesList);
                 setFilteredMovies(moviesList);
+                setPageInfo(pageResult || null);
               } catch (err) {
                 setError(err.message || 'Failed to load movies');
               } finally {
@@ -364,6 +375,34 @@ function AdminMovies() {
             })}
           </div>
         </>
+      )}
+
+      {!loading && !error && pageInfo && pageInfo.totalPages > 1 && (
+        <div className="flex items-center justify-center gap-4 px-4 py-4 text-xs text-slate-700">
+          <button
+            type="button"
+            className="rounded-full bg-slate-100 px-4 py-1.5 font-medium ring-1 ring-slate-300 disabled:opacity-50"
+            onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
+            disabled={page <= 0}
+          >
+            Previous
+          </button>
+          <span>
+            Page {pageInfo.currentPageNumber} of {pageInfo.totalPages}
+          </span>
+          <button
+            type="button"
+            className="rounded-full bg-slate-100 px-4 py-1.5 font-medium ring-1 ring-slate-300 disabled:opacity-50"
+            onClick={() =>
+              setPage((prev) =>
+                pageInfo && pageInfo.totalPages ? Math.min(prev + 1, pageInfo.totalPages - 1) : prev + 1
+              )
+            }
+            disabled={pageInfo && pageInfo.totalPages ? page >= pageInfo.totalPages - 1 : false}
+          >
+            Next
+          </button>
+        </div>
       )}
 
       {/* Delete Confirmation Dialog */}

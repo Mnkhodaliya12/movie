@@ -20,12 +20,16 @@ async function handleResponse(response) {
   return response.text();
 }
    
-export async function fetchMovies() {
-  const res = await fetch(`${API_BASE}/movies`, {
+export async function fetchMovies(page = 0, size = 20) {
+  const params = new URLSearchParams();
+  params.set('pageNumber', String(page + 1));
+  params.set('pageSize', String(size));
+
+  const res = await fetch(`${API_BASE}/movies?${params.toString()}`, {
     method: 'GET',
   });
   const body = await handleResponse(res);
-  return body && typeof body === 'object' && 'data' in body ? body.data : body;
+  return body;
 }
 
 export async function fetchMovieById(id) {

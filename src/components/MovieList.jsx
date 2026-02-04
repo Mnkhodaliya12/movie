@@ -12,7 +12,7 @@ function MovieList({ movies, favorites, onToggleFavorite }) {
   const favoriteIds = new Set(favorites.map((m) => m.id));
 
   return (
-    <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
+    <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5">
       {movies.map((movie) => (
         <MovieCard
           key={movie.id}
